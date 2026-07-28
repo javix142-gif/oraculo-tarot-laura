@@ -102,7 +102,7 @@ jobs:
           (
             set -euxo pipefail
             ROOT=/tmp/oraculo-persist/oraculo-tarot-laura-android
-            rsync -a --delete --exclude='.git/' "$ROOT/" "$GITHUB_WORKSPACE/"
+            rsync -a --delete --exclude='.git/' --exclude='.github/workflows/' "$ROOT/" "$GITHUB_WORKSPACE/"
             cd "$GITHUB_WORKSPACE"
             rm -rf .gradle build app/build
             git config user.name 'ChatGPT Recovery'
