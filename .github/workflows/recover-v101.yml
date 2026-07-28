@@ -1,0 +1,167 @@
+name: Recuperar fuente completa v1.0.1
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'recovery-source.part00'
+      - 'recovery-patch.part*'
+      - '.github/workflows/recover-v101.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: recover-v101-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  recover:
+    if: github.head_ref == 'recovery/v1.0.1' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Obtener rama de recuperación
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Configurar Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Configurar caché Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Recuperar fuente histórica verificada
+        shell: bash
+        run: |
+          set -euo pipefail
+          RECOVERY=/tmp/oraculo-recovery
+          ARCHIVE="$RECOVERY/archive"
+          PINNED=291469b0af91f4956c95395ac806171a04c24922
+          BASE_URL="https://raw.githubusercontent.com/javix142-gif/Prueba-de-Qwen/$PINNED"
+          mkdir -p "$ARCHIVE"
+          for part in 00 01 02 03 04 05 06; do
+            curl --fail --location --retry 3 "$BASE_URL/oraculo-source.part$part" --output "$ARCHIVE/oraculo-source.part$part"
+          done
+          cat "$ARCHIVE"/oraculo-source.part* > "$RECOVERY/source.tar.gz.b64"
+          base64 --decode "$RECOVERY/source.tar.gz.b64" > "$RECOVERY/source.tar.gz"
+          echo '9717e9abe9cec937a60e8f609d52f8878cbaff1f114a32a64b56b04f9f4534b6  /tmp/oraculo-recovery/source.tar.gz' | sha256sum --check
+          tar -xzf "$RECOVERY/source.tar.gz" -C "$RECOVERY"
+          curl --fail --location --retry 3 "$BASE_URL/oraculo-android-styles.xml" --output "$RECOVERY/styles.xml"
+          cp "$RECOVERY/styles.xml" "$RECOVERY/oraculo-tarot-laura-android/app/src/main/res/values/styles.xml"
+
+      - name: Regenerar Gradle Wrapper 8.9 oficial
+        shell: bash
+        run: |
+          set -euo pipefail
+          RECOVERY=/tmp/oraculo-recovery
+          ROOT="$RECOVERY/oraculo-tarot-laura-android"
+          cat > "$ROOT/build.gradle" <<'GRADLE'
+          plugins {
+              id 'com.android.application' version '8.7.0' apply false
+          }
+          GRADLE
+          curl --fail --location --retry 3 https://services.gradle.org/distributions/gradle-8.9-bin.zip --output "$RECOVERY/gradle-8.9-bin.zip"
+          echo 'd725d707bfabd4dfdc958c624003b3c80accc03f7037b5122c4b1d0ef15cecab  /tmp/oraculo-recovery/gradle-8.9-bin.zip' | sha256sum --check
+          unzip -q "$RECOVERY/gradle-8.9-bin.zip" -d "$RECOVERY/gradle-dist"
+          cd "$ROOT"
+          "$RECOVERY/gradle-dist/gradle-8.9/bin/gradle" wrapper \
+            --gradle-version 8.9 \
+            --distribution-type bin \
+            --gradle-distribution-sha256-sum d725d707bfabd4dfdc958c624003b3c80accc03f7037b5122c4b1d0ef15cecab
+          chmod +x gradlew
+          test -f gradlew
+          test -f gradlew.bat
+          test -f gradle/wrapper/gradle-wrapper.jar
+          test -f gradle/wrapper/gradle-wrapper.properties
+          grep -F 'distributionUrl=https\://services.gradle.org/distributions/gradle-8.9-bin.zip' gradle/wrapper/gradle-wrapper.properties
+          grep -F 'distributionSha256Sum=d725d707bfabd4dfdc958c624003b3c80accc03f7037b5122c4b1d0ef15cecab' gradle/wrapper/gradle-wrapper.properties
+          echo '498495120a03b9a6ab5d155f5de3c8f0d986a449153702fb80fc80e134484f17  gradle/wrapper/gradle-wrapper.jar' | sha256sum --check
+          ./gradlew --version | tee "$RECOVERY/gradle-version.txt"
+          grep -F 'Gradle 8.9' "$RECOVERY/gradle-version.txt"
+          grep -E 'JVM:.*17|Launcher JVM:.*17' "$RECOVERY/gradle-version.txt"
+
+      - name: Normalizar fuente y aplicar cambios aprobados 1.0.1
+        shell: bash
+        run: |
+          set -euo pipefail
+          RECOVERY=/tmp/oraculo-recovery
+          ROOT="$RECOVERY/oraculo-tarot-laura-android"
+          cp "$ROOT/android-web/index.html" "$ROOT/index.html"
+          cp "$ROOT/android-web/styles.css" "$ROOT/styles.css"
+          cp "$ROOT/android-web/service-worker.js" "$ROOT/service-worker.js"
+          cp "$ROOT/android-web/manifest.webmanifest" "$ROOT/manifest.webmanifest"
+          cp "$ROOT/android-web/offline.html" "$ROOT/offline.html"
+          rm -rf "$ROOT/js" "$ROOT/assets" "$ROOT/icons"
+          cp -a "$ROOT/android-web/js" "$ROOT/js"
+          cp -a "$ROOT/android-web/assets" "$ROOT/assets"
+          cp -a "$ROOT/android-web/icons" "$ROOT/icons"
+          rm -rf "$ROOT/.gradle" "$ROOT/build" "$ROOT/app/build"
+          cat "$GITHUB_WORKSPACE"/recovery-patch.part* > "$RECOVERY/v101.patch"
+          echo 'ba22ca68716bf8d37ab36ad862ed7e8943799631c91ccec0233f74587b47a7e5  /tmp/oraculo-recovery/v101.patch' | sha256sum --check
+          cd "$ROOT"
+          git init -q
+          git config user.name 'Recovery Validation'
+          git config user.email 'recovery@users.noreply.github.com'
+          git add -A
+          git commit -qm 'base verificable 1.0.0'
+          git apply --check "$RECOVERY/v101.patch"
+          git apply "$RECOVERY/v101.patch"
+
+      - name: Validar fuente 1.0.1 antes de persistir
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT=/tmp/oraculo-recovery/oraculo-tarot-laura-android
+          cd "$ROOT"
+          node --test
+          node --check js/app.js
+          node --check js/tarot-data.js
+          node --check js/tarot-engine.js
+          node --check js/storage.js
+          node --check service-worker.js
+          node --input-type=module <<'NODE'
+          import { TAROT_CARDS } from './js/tarot-data.js';
+          if (TAROT_CARDS.length !== 22) throw new Error(`Se esperaban 22 cartas y existen ${TAROT_CARDS.length}`);
+          const ids = new Set(TAROT_CARDS.map((card) => card.id));
+          if (ids.size !== 22) throw new Error('Existen identificadores de cartas repetidos.');
+          console.log('22 cartas únicas verificadas.');
+          NODE
+          grep -F "applicationId 'cl.oraculotarotlaura.app'" app/build.gradle
+          grep -F 'versionCode 2' app/build.gradle
+          grep -F "versionName '1.0.1'" app/build.gradle
+          ./gradlew :app:assembleDebug --dry-run
+          rm -rf .gradle build app/build
+          git add -A
+          git diff --cached --check
+          test "$(git ls-files --cached | wc -l)" -eq 97
+          test "$(find assets/cards -maxdepth 1 -name '*.svg' ! -name 'card-back.svg' | wc -l)" -eq 22
+
+      - name: Persistir fuente completa en la rama
+        shell: bash
+        env:
+          TARGET_BRANCH: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          ROOT=/tmp/oraculo-recovery/oraculo-tarot-laura-android
+          rsync -a --delete --exclude='.git/' "$ROOT/" "$GITHUB_WORKSPACE/"
+          cd "$GITHUB_WORKSPACE"
+          rm -rf .gradle build app/build
+          git config user.name 'ChatGPT Recovery'
+          git config user.email 'chatgpt-recovery@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'fix: recover complete Android source and apply v1.0.1'
+          git push origin "HEAD:$TARGET_BRANCH"
+          echo "SOURCE_COMMIT=$(git rev-parse HEAD)" | tee source-commit.txt
