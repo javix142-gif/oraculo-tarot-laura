@@ -38,7 +38,7 @@ test('manifest tiene configuración PWA e iconos existentes', async () => {
 
 test('service worker precarga el núcleo y las 22 cartas', async () => {
   const sw = await read('service-worker.js');
-  assert.match(sw, /oraculo-tarot-laura-v2/);
+  assert.match(sw, /oraculo-tarot-laura-v1\.0\.2/);
   for (const path of ['./index.html','./styles.css','./js/app.js','./manifest.webmanifest','./offline.html','./assets/cards/card-back.svg']) {
     assert.ok(sw.includes(path), `Falta ${path} en la caché esencial`);
   }
