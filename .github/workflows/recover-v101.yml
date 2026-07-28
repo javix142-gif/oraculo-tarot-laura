@@ -10,6 +10,8 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
+  issues: write
 
 concurrency:
   group: recover-v101-${{ github.ref }}
@@ -94,6 +96,9 @@ jobs:
 
       - name: Normalizar fuente y aplicar cambios aprobados 1.0.1
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
           RECOVERY=/tmp/oraculo-recovery
@@ -116,7 +121,16 @@ jobs:
           git config user.email 'recovery@users.noreply.github.com'
           git add -A
           git commit -qm 'base verificable 1.0.0'
-          git apply --check "$RECOVERY/v101.patch"
+          if ! git apply --check --verbose "$RECOVERY/v101.patch" > "$RECOVERY/apply-check.txt" 2>&1; then
+            {
+              echo '### Error exacto al aplicar el parche 1.0.1'
+              echo '```text'
+              cat "$RECOVERY/apply-check.txt"
+              echo '```'
+            } > "$RECOVERY/apply-check.md"
+            gh pr comment "$PR_NUMBER" --body-file "$RECOVERY/apply-check.md"
+            exit 1
+          fi
           git apply "$RECOVERY/v101.patch"
 
       - name: Validar fuente 1.0.1 antes de persistir
