@@ -3,7 +3,9 @@ package cl.oraculotarotlaura.app;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -80,21 +82,39 @@ public final class MainActivity extends Activity {
 
     private void configureWindowInsets(WebView view) {
         view.setOnApplyWindowInsetsListener((target, insets) -> {
-            insetTop = insets.getSystemWindowInsetTop();
-            insetRight = insets.getSystemWindowInsetRight();
-            insetBottom = insets.getSystemWindowInsetBottom();
-            insetLeft = insets.getSystemWindowInsetLeft();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                Insets systemBars = insets.getInsets(WindowInsets.Type.systemBars());
+                insetTop = systemBars.top;
+                insetRight = systemBars.right;
+                insetBottom = systemBars.bottom;
+                insetLeft = systemBars.left;
+            } else {
+                insetTop = insets.getSystemWindowInsetTop();
+                insetRight = insets.getSystemWindowInsetRight();
+                insetBottom = insets.getSystemWindowInsetBottom();
+                insetLeft = insets.getSystemWindowInsetLeft();
+            }
             applyInsetsToWebView();
             return insets;
         });
     }
 
+    private String toCssPixels(int physicalPixels) {
+        float density = getResources().getDisplayMetrics().density;
+        float cssPixels = density > 0f ? physicalPixels / density : physicalPixels;
+        return String.format(Locale.US, "%.2fpx", cssPixels);
+    }
+
+    // CSS combines --safe-area-inset-top with --android-safe-top using max().
+    // CSS combines --safe-area-inset-right with --android-safe-right using max().
+    // CSS combines --safe-area-inset-bottom with --android-safe-bottom using max().
+    // CSS combines --safe-area-inset-left with --android-safe-left using max().
     private void applyInsetsToWebView() {
         if (webView == null) return;
-        String script = "document.documentElement.style.setProperty('--safe-area-inset-top','" + insetTop + "px');"
-                + "document.documentElement.style.setProperty('--safe-area-inset-right','" + insetRight + "px');"
-                + "document.documentElement.style.setProperty('--safe-area-inset-bottom','" + insetBottom + "px');"
-                + "document.documentElement.style.setProperty('--safe-area-inset-left','" + insetLeft + "px');";
+        String script = "document.documentElement.style.setProperty('--android-safe-top','" + toCssPixels(insetTop) + "');"
+                + "document.documentElement.style.setProperty('--android-safe-right','" + toCssPixels(insetRight) + "');"
+                + "document.documentElement.style.setProperty('--android-safe-bottom','" + toCssPixels(insetBottom) + "');"
+                + "document.documentElement.style.setProperty('--android-safe-left','" + toCssPixels(insetLeft) + "');";
         webView.evaluateJavascript(script, null);
     }
 
