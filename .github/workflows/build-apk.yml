@@ -1,0 +1,89 @@
+name: Construir APK de prueba
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Obtener repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Configurar caché Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Ejecutar pruebas
+        run: node --test
+
+      - name: Ensamblar una única variante debug
+        run: ./gradlew :app:assembleDebug --build-cache
+
+      - name: Preparar APK
+        run: |
+          mkdir -p deliverable
+          cp app/build/outputs/apk/debug/app-debug.apk deliverable/Oraculo-Tarot-Laura-v1.0.1.apk
+
+      - name: Verificar APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=deliverable/Oraculo-Tarot-Laura-v1.0.1.apk
+          test -s "$APK"
+          unzip -tq "$APK"
+
+          AAPT=$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
+          test -x "$AAPT"
+          test -x "$APKSIGNER"
+
+          "$AAPT" dump badging "$APK" | tee /tmp/apk-badging.txt
+          grep -F "package: name='cl.oraculotarotlaura.app' versionCode='2' versionName='1.0.1'" /tmp/apk-badging.txt
+
+          "$AAPT" dump permissions "$APK" | tee /tmp/apk-permissions.txt
+          if grep -Fq 'android.permission.INTERNET' /tmp/apk-permissions.txt; then
+            echo 'El APK solicita permiso de Internet.' >&2
+            exit 1
+          fi
+
+          "$APKSIGNER" verify --verbose --print-certs "$APK" | tee /tmp/apk-signature.txt
+
+          CARD_COUNT=$(unzip -Z1 "$APK" | grep -Ec '^assets/assets/cards/[0-9]{2}-.*\.svg$')
+          test "$CARD_COUNT" -eq 22
+          unzip -p "$APK" assets/styles.css | grep -F -- '--safe-area-inset-bottom'
+          unzip -p "$APK" assets/styles.css | grep -F '56px minmax(0, 1fr) 56px'
+          unzip -p "$APK" assets/index.html | grep -F 'Borrar historial'
+          unzip -p "$APK" assets/js/app.js | grep -F 'navigator.share'
+          unzip -p "$APK" assets/js/app.js | grep -F "document.execCommand('copy')"
+
+          stat --format='APK size: %s bytes' "$APK"
+          sha256sum "$APK"
+
+      - name: Publicar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Oraculo-Tarot-Laura-v1.0.1
+          path: deliverable/Oraculo-Tarot-Laura-v1.0.1.apk
+          if-no-files-found: error
+          retention-days: 30

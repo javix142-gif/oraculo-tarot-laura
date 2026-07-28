@@ -1,0 +1,23 @@
+# Sistema operativo y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Credenciales y configuración local
+.env
+.env.*
+!.env.example
+local.properties
+*.jks
+*.keystore
+
+# Gradle y artefactos generados
+.gradle/
+build/
+app/build/
+
+# Logs y archivos temporales
+*.log
+*.tmp
+coverage/
