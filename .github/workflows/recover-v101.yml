@@ -103,24 +103,45 @@ jobs:
       - name: Normalizar fuente y aplicar cambios aprobados 1.0.1
         shell: bash
         run: |
-          set -euo pipefail
-          RECOVERY=/tmp/oraculo-recovery
-          ROOT="$RECOVERY/oraculo-tarot-laura-android"
-          cp "$ROOT/android-web/index.html" "$ROOT/index.html"
-          cp "$ROOT/android-web/styles.css" "$ROOT/styles.css"
-          cp "$ROOT/android-web/service-worker.js" "$ROOT/service-worker.js"
-          cp "$ROOT/android-web/manifest.webmanifest" "$ROOT/manifest.webmanifest"
-          cp "$ROOT/android-web/offline.html" "$ROOT/offline.html"
-          rm -rf "$ROOT/js" "$ROOT/assets" "$ROOT/icons"
-          cp -a "$ROOT/android-web/js" "$ROOT/js"
-          cp -a "$ROOT/android-web/assets" "$ROOT/assets"
-          cp -a "$ROOT/android-web/icons" "$ROOT/icons"
-          rm -rf "$ROOT/.gradle" "$ROOT/build" "$ROOT/app/build"
-          cat "$GITHUB_WORKSPACE"/recovery-patch.part* > "$RECOVERY/v101.patch"
-          echo 'ba22ca68716bf8d37ab36ad862ed7e8943799631c91ccec0233f74587b47a7e5  /tmp/oraculo-recovery/v101.patch' | sha256sum --check
-          cd "$ROOT"
-          git apply --check --verbose "$RECOVERY/v101.patch"
-          git apply "$RECOVERY/v101.patch"
+          set +e
+          (
+            set -euxo pipefail
+            RECOVERY=/tmp/oraculo-recovery
+            ROOT="$RECOVERY/oraculo-tarot-laura-android"
+            cp "$ROOT/android-web/index.html" "$ROOT/index.html"
+            cp "$ROOT/android-web/styles.css" "$ROOT/styles.css"
+            cp "$ROOT/android-web/service-worker.js" "$ROOT/service-worker.js"
+            cp "$ROOT/android-web/manifest.webmanifest" "$ROOT/manifest.webmanifest"
+            cp "$ROOT/android-web/offline.html" "$ROOT/offline.html"
+            rm -rf "$ROOT/js" "$ROOT/assets" "$ROOT/icons"
+            cp -a "$ROOT/android-web/js" "$ROOT/js"
+            cp -a "$ROOT/android-web/assets" "$ROOT/assets"
+            cp -a "$ROOT/android-web/icons" "$ROOT/icons"
+            rm -rf "$ROOT/.gradle" "$ROOT/build" "$ROOT/app/build"
+            cat "$GITHUB_WORKSPACE"/recovery-patch.part* > "$RECOVERY/v101.patch"
+            echo 'ba22ca68716bf8d37ab36ad862ed7e8943799631c91ccec0233f74587b47a7e5  /tmp/oraculo-recovery/v101.patch' | sha256sum --check
+            cd "$ROOT"
+            git apply --check --verbose "$RECOVERY/v101.patch"
+            git apply "$RECOVERY/v101.patch"
+          ) > /tmp/recovery-normalize.log 2>&1
+          status=$?
+          printf '%s\n' "$status" > /tmp/recovery-normalize.status
+          exit 0
+
+      - name: Publicar registro de normalización
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recovery-normalize-log
+          path: |
+            /tmp/recovery-normalize.log
+            /tmp/recovery-normalize.status
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Verificar normalización
+        shell: bash
+        run: test "$(cat /tmp/recovery-normalize.status)" = '0'
 
       - name: Validar fuente 1.0.1 antes de persistir
         shell: bash
