@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#120c2f">
+  <meta name="description" content="Simulador móvil de lecturas reflexivas con los 22 Arcanos Mayores.">
+  <title>Oráculo Tarot Laura — Lectura y Cartas</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Saltar al contenido</a>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="icon-button header-slot-empty" id="back-button" type="button" aria-label="Volver" aria-hidden="true" tabindex="-1">←</button>
+      <button class="brand-button" id="home-brand" type="button" aria-label="Ir al inicio">
+        <span class="brand-mark" aria-hidden="true">✦</span>
+        <span><strong>Oráculo Tarot Laura</strong><small>Lectura y Cartas</small></span>
+      </button>
+      <button class="icon-button" id="about-button" type="button" aria-label="Información de la aplicación">ⓘ</button>
+    </header>
+
+    <main id="main-content" tabindex="-1">
+      <section class="screen active" id="screen-home" data-screen="home" aria-labelledby="home-title">
+        <div class="hero-card">
+          <span class="eyebrow">22 Arcanos Mayores</span>
+          <div class="oracle-emblem" aria-hidden="true"><span>☾</span><i></i><b>✦</b></div>
+          <h1 id="home-title">Oráculo Tarot Laura</h1>
+          <p class="hero-subtitle">Lectura y Cartas</p>
+          <p class="hero-copy">Una pausa simbólica para observar una pregunta desde otra perspectiva.</p>
+          <div class="primary-actions">
+            <button class="button button-primary" id="start-button" type="button">Comenzar lectura</button>
+            <button class="button button-secondary" id="history-button" type="button">Historial</button>
+            <button class="button button-ghost hidden" id="install-button" type="button">Instalar aplicación</button>
+          </div>
+        </div>
+        <p class="disclaimer">Esta aplicación es una simulación destinada al entretenimiento y la reflexión personal. No garantiza predicciones ni reemplaza asesoramiento profesional.</p>
+      </section>
+
+      <section class="screen" id="screen-setup" data-screen="setup" aria-labelledby="setup-title" hidden>
+        <div class="section-heading">
+          <span class="step">Paso 1 de 2</span>
+          <h2 id="setup-title">Elige tu tirada</h2>
+          <p>Selecciona una forma de lectura y, si lo deseas, escribe una pregunta.</p>
+        </div>
+
+        <form id="reading-form" novalidate>
+          <fieldset class="spread-options">
+            <legend class="sr-only">Tipo de tirada</legend>
+            <label class="spread-option">
+              <input type="radio" name="spread" value="daily" checked>
+              <span class="spread-icon" aria-hidden="true">Ⅰ</span>
+              <span><strong>Carta del día</strong><small>Una carta y un mensaje general.</small></span>
+            </label>
+            <label class="spread-option">
+              <input type="radio" name="spread" value="timeline">
+              <span class="spread-icon three" aria-hidden="true">Ⅰ Ⅱ Ⅲ</span>
+              <span><strong>Pasado, presente y futuro</strong><small>Tres perspectivas complementarias.</small></span>
+            </label>
+          </fieldset>
+
+          <label class="question-field" for="question-input">
+            <span><strong>Pregunta opcional</strong><small id="question-count">0 / 200</small></span>
+            <textarea id="question-input" maxlength="200" rows="4" placeholder="Ej.: ¿Qué aspecto de esta situación conviene observar con más calma?"></textarea>
+          </label>
+          <p class="form-hint">Evita ingresar información personal sensible.</p>
+          <button class="button button-primary" type="submit">Barajar las cartas</button>
+        </form>
+      </section>
+
+      <section class="screen" id="screen-draw" data-screen="draw" aria-labelledby="draw-title" hidden>
+        <div class="section-heading compact">
+          <span class="step">Paso 2 de 2</span>
+          <h2 id="draw-title">Elige <span id="remaining-count">una carta</span></h2>
+          <p id="draw-instruction">Toca una carta boca abajo para revelarla.</p>
+        </div>
+        <div class="reading-context" id="reading-context" hidden></div>
+        <div class="shuffle-status" id="shuffle-status" role="status" aria-live="polite">
+          <span class="shuffle-orbit" aria-hidden="true">✦</span>
+          <span>Barajando los 22 Arcanos Mayores…</span>
+        </div>
+        <div class="deck-grid shuffling" id="deck-grid" aria-label="Mazo de cartas boca abajo"></div>
+        <div class="selection-progress" id="selection-progress" aria-live="polite"></div>
+      </section>
+
+      <section class="screen" id="screen-result" data-screen="result" aria-labelledby="result-title" hidden>
+        <div class="section-heading compact">
+          <span class="eyebrow">Lectura guardada en este dispositivo</span>
+          <h2 id="result-title">Tu lectura</h2>
+          <p id="result-date"></p>
+        </div>
+        <div id="result-question" class="result-question" hidden></div>
+        <div class="result-cards" id="result-cards"></div>
+        <div class="result-actions">
+          <button class="button button-primary" id="new-reading-button" type="button">Nueva lectura</button>
+          <button class="button button-secondary" id="share-reading-button" type="button">Compartir lectura</button>
+          <button class="button button-secondary" id="result-home-button" type="button">Volver al inicio</button>
+        </div>
+        <p class="reflection-note">Las cartas ofrecen símbolos para reflexionar. Tú decides qué interpretación resulta útil para tu situación.</p>
+      </section>
+
+      <section class="screen" id="screen-history" data-screen="history" aria-labelledby="history-title" hidden>
+        <div class="section-heading history-heading">
+          <div>
+            <span class="eyebrow">Guardado solo en este dispositivo</span>
+            <h2 id="history-title">Historial</h2>
+          </div>
+          <button class="text-button danger hidden" id="clear-history-button" type="button">Borrar historial</button>
+        </div>
+        <div id="history-empty" class="empty-state" hidden>
+          <span aria-hidden="true">☾</span>
+          <h3>Aún no hay lecturas</h3>
+          <p>Cuando completes una tirada, aparecerá aquí.</p>
+          <button class="button button-primary" id="empty-start-button" type="button">Comenzar lectura</button>
+        </div>
+        <div class="history-list" id="history-list"></div>
+      </section>
+
+      <section class="screen" id="screen-detail" data-screen="detail" aria-labelledby="detail-title" hidden>
+        <div class="section-heading compact">
+          <span class="eyebrow">Lectura guardada</span>
+          <h2 id="detail-title">Detalle</h2>
+          <p id="detail-date"></p>
+        </div>
+        <div id="detail-question" class="result-question" hidden></div>
+        <div class="result-cards" id="detail-cards"></div>
+        <div class="result-actions detail-actions">
+          <button class="button button-secondary" id="detail-share-button" type="button">Compartir lectura</button>
+        </div>
+      </section>
+    </main>
+
+    <footer><span>Uso recreativo y reflexivo</span><span aria-hidden="true">·</span><span>Sin datos en servidores</span></footer>
+  </div>
+
+  <dialog id="about-dialog" aria-labelledby="about-title" aria-modal="true">
+    <div class="dialog-card">
+      <button class="dialog-close" id="close-about-button" type="button" aria-label="Cerrar">×</button>
+      <span class="dialog-symbol" aria-hidden="true">✦</span>
+      <h2 id="about-title">Sobre esta aplicación</h2>
+      <p><strong>Oráculo Tarot Laura</strong> es una simulación de tarot creada para entretenimiento y reflexión personal.</p>
+      <p>Las interpretaciones son textos predefinidos, prudentes y no deterministas. No utiliza inteligencia artificial ni envía información a servidores.</p>
+      <p>No reemplaza asesoramiento médico, psicológico, legal, financiero ni profesional.</p>
+      <button class="button button-secondary" id="dialog-ok-button" type="button">Entendido</button>
+    </div>
+  </dialog>
+
+  <dialog id="confirm-dialog" aria-labelledby="confirm-title" aria-modal="true">
+    <form method="dialog" class="dialog-card compact-dialog">
+      <h2 id="confirm-title">Eliminar historial</h2>
+      <p id="confirm-message">Esta acción no se puede deshacer.</p>
+      <div class="dialog-actions">
+        <button class="button button-secondary" value="cancel">Cancelar</button>
+        <button class="button button-danger" value="confirm">Eliminar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  <noscript>Esta aplicación necesita JavaScript para realizar las lecturas.</noscript>
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

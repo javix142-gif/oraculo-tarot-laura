@@ -1,0 +1,43 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'cl.oraculotarotlaura.app'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'cl.oraculotarotlaura.app'
+        minSdk 23
+        targetSdk 35
+        versionCode 2
+        versionName '1.0.1'
+    }
+
+    sourceSets {
+        main {
+            assets.srcDirs = ['../android-web']
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        buildConfig false
+    }
+
+    lint {
+        abortOnError true
+        checkReleaseBuilds true
+    }
+}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 520" role="img" aria-labelledby="t d">
+<title id="t">El Juicio</title><desc id="d">Representación abstracta original del Arcano Mayor 20, El Juicio.</desc>
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1a123c"/><stop offset="1" stop-color="#4c2d73"/></linearGradient><radialGradient id="h"><stop stop-color="#f2d98d" stop-opacity=".16"/><stop offset="1" stop-color="#f2d98d" stop-opacity="0"/></radialGradient></defs>
+<rect width="320" height="520" rx="24" fill="#09071b"/><rect x="10" y="10" width="300" height="500" rx="18" fill="url(#g)" stroke="#d7b65e" stroke-width="3"/><rect x="24" y="24" width="272" height="472" rx="13" fill="none" stroke="#f2d98d" stroke-opacity=".38"/>
+<circle cx="160" cy="238" r="130" fill="url(#h)"/><circle cx="60" cy="175" r="1" fill="#f6e4aa" opacity=".55"/><circle cx="113" cy="236" r="2" fill="#f6e4aa" opacity=".55"/><circle cx="166" cy="297" r="1" fill="#f6e4aa" opacity=".55"/><circle cx="219" cy="108" r="2" fill="#f6e4aa" opacity=".55"/><circle cx="272" cy="169" r="1" fill="#f6e4aa" opacity=".55"/><circle cx="85" cy="230" r="2" fill="#f6e4aa" opacity=".55"/>
+<text x="42" y="62" fill="#f2d98d" font-size="26" font-family="Georgia,serif">20</text><text x="278" y="62" text-anchor="end" fill="#f2d98d" font-size="24">✦</text>
+<path d="M105 285 Q125 175 205 165 Q195 250 105 285Z" stroke="#f2d98d" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M100 285 l-20 30 M130 270 l18 40" stroke="#f2d98d" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="215" cy="155" r="13" stroke="#f2d98d" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M72 405 H248" stroke="#f2d98d" stroke-opacity=".42"/><text x="160" y="440" text-anchor="middle" fill="#fff7df" font-size="22" font-family="Georgia,serif">El Juicio</text>
+</svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 520" role="img" aria-labelledby="t d">
+<title id="t">El Emperador</title><desc id="d">Representación abstracta original del Arcano Mayor 4, El Emperador.</desc>
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1a123c"/><stop offset="1" stop-color="#4c2d73"/></linearGradient><radialGradient id="h"><stop stop-color="#f2d98d" stop-opacity=".16"/><stop offset="1" stop-color="#f2d98d" stop-opacity="0"/></radialGradient></defs>
+<rect width="320" height="520" rx="24" fill="#09071b"/><rect x="10" y="10" width="300" height="500" rx="18" fill="url(#g)" stroke="#d7b65e" stroke-width="3"/><rect x="24" y="24" width="272" height="472" rx="13" fill="none" stroke="#f2d98d" stroke-opacity=".38"/>
+<circle cx="160" cy="238" r="130" fill="url(#h)"/><circle cx="188" cy="211" r="1" fill="#f6e4aa" opacity=".55"/><circle cx="241" cy="272" r="2" fill="#f6e4aa" opacity=".55"/><circle cx="54" cy="333" r="1" fill="#f6e4aa" opacity=".55"/><circle cx="107" cy="144" r="2" fill="#f6e4aa" opacity=".55"/><circle cx="160" cy="205" r="1" fill="#f6e4aa" opacity=".55"/><circle cx="213" cy="266" r="2" fill="#f6e4aa" opacity=".55"/>
+<text x="42" y="62" fill="#f2d98d" font-size="26" font-family="Georgia,serif">4</text><text x="278" y="62" text-anchor="end" fill="#f2d98d" font-size="24">✦</text>
+<rect x="100" y="175" width="120" height="140" rx="8" stroke="#f2d98d" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M90 325 h140 M160 150 v190" stroke="#f2d98d" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M72 405 H248" stroke="#f2d98d" stroke-opacity=".42"/><text x="160" y="440" text-anchor="middle" fill="#fff7df" font-size="22" font-family="Georgia,serif">El Emperador</text>
+</svg>
