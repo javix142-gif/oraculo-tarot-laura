@@ -1,0 +1,28 @@
+name: Diagnosticar parche de recuperación
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/diagnose-patch.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Obtener rama
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Verificar partes y parche concatenado
+        run: |
+          set -euo pipefail
+          wc -c recovery-patch.part*
+          sha256sum recovery-patch.part*
+          cat recovery-patch.part* > /tmp/v101.patch
+          wc -c /tmp/v101.patch
+          sha256sum /tmp/v101.patch
