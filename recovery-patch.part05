@@ -1,0 +1,172 @@
+; min-height: 86px; padding: 14px 16px; border: 0; background: transparent; text-align: left; cursor: pointer; }
+@@ -156,8 +173,8 @@ textarea::placeholder { color: #8d86a2; }
+ .empty-state { margin-top: 8vh; padding: 32px 20px; text-align: center; border: 1px dashed rgba(228,193,111,.28); border-radius: 22px; background: rgba(27,18,62,.55); }
+ .empty-state > span { display: block; color: var(--gold); font-size: 3rem; }
+ .empty-state p { color: var(--muted); font-family: system-ui,sans-serif; }
+-footer { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; padding: 28px 8px 18px; color: #8d86a2; font-family: system-ui,sans-serif; font-size: .7rem; }
+-dialog { width: min(calc(100% - 28px), 500px); padding: 0; border: 1px solid rgba(228,193,111,.32); border-radius: 22px; color: var(--text); background: var(--panel-solid); box-shadow: var(--shadow); }
++footer { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; padding: 28px 8px calc(18px + var(--safe-area-inset-bottom)); color: #8d86a2; font-family: system-ui,sans-serif; font-size: .7rem; }
++dialog { width: min(calc(100% - 28px - var(--safe-area-inset-left) - var(--safe-area-inset-right)), 500px); max-height: calc(100dvh - 28px - var(--safe-area-inset-top) - var(--safe-area-inset-bottom)); overflow: auto; padding: 0; border: 1px solid rgba(228,193,111,.32); border-radius: 22px; color: var(--text); background: var(--panel-solid); box-shadow: var(--shadow); }
+ dialog::backdrop { background: rgba(3,2,12,.78); backdrop-filter: blur(5px); }
+ .dialog-card { position: relative; padding: 28px 22px 22px; text-align: center; }
+ .dialog-card p { color: var(--muted); font-family: system-ui,sans-serif; line-height: 1.55; }
+@@ -165,7 +182,7 @@ dialog::backdrop { background: rgba(3,2,12,.78); backdrop-filter: blur(5px); }
+ .dialog-symbol { display: block; margin-bottom: 8px; color: var(--gold); font-size: 2rem; }
+ .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 22px; }
+ .compact-dialog { text-align: left; }
+-.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 80; max-width: calc(100% - 32px); padding: 12px 16px; border: 1px solid rgba(228,193,111,.3); border-radius: 99px; background: #221647; color: var(--text); box-shadow: 0 10px 34px rgba(0,0,0,.35); font-family: system-ui,sans-serif; font-size: .82rem; transform: translate(-50%, 30px); opacity: 0; pointer-events: none; transition: .22s ease; }
++.toast { position: fixed; left: 50%; bottom: calc(20px + var(--safe-area-inset-bottom)); z-index: 80; max-width: calc(100% - 32px); padding: 12px 16px; border: 1px solid rgba(228,193,111,.3); border-radius: 99px; background: #221647; color: var(--text); box-shadow: 0 10px 34px rgba(0,0,0,.35); font-family: system-ui,sans-serif; font-size: .82rem; transform: translate(-50%, 30px); opacity: 0; pointer-events: none; transition: .22s ease; }
+ .toast.visible { opacity: 1; transform: translate(-50%,0); }
+ noscript { display: block; padding: 20px; color: white; background: #6d1f35; font-family: system-ui,sans-serif; }
+ 
+@@ -174,7 +191,7 @@ noscript { display: block; padding: 20px; color: white; background: #6d1f35; fon
+ @keyframes selected-rise { 50% { transform: translateY(-7px); } }
+ 
+ @media (min-width: 520px) {
+-  .app-shell { padding-inline: 24px; }
++  .app-shell { padding-left: calc(24px + var(--safe-area-inset-left)); padding-right: calc(24px + var(--safe-area-inset-right)); }
+   .hero-card { padding: 50px 46px 38px; }
+   .primary-actions { grid-template-columns: 1fr 1fr; }
+   .primary-actions .button-primary, .primary-actions .button-ghost { grid-column: 1 / -1; }
+@@ -188,7 +205,7 @@ noscript { display: block; padding: 20px; color: white; background: #6d1f35; fon
+   .result-cards.timeline .result-card { grid-template-columns: 1fr; }
+ }
+ @media (max-width: 380px) {
+-  .app-shell { padding-inline: 10px; }
++  .app-shell { padding-left: calc(10px + var(--safe-area-inset-left)); padding-right: calc(10px + var(--safe-area-inset-right)); }
+   .deck-grid { gap: 7px 5px; }
+   .result-card { grid-template-columns: 96px 1fr; gap: 12px; padding: 12px; }
+   .interpretation { font-size: .84rem; }
+diff --git a/tests/android-container.test.mjs b/tests/android-container.test.mjs
+new file mode 100644
+index 0000000..3bb864a
+--- /dev/null
++++ b/tests/android-container.test.mjs
+@@ -0,0 +1,49 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import { readFile, readdir } from 'node:fs/promises';
++import { resolve, dirname, relative } from 'node:path';
++import { fileURLToPath } from 'node:url';
++
++const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
++const read = (path) => readFile(resolve(root, path), 'utf8');
++
++async function listFiles(directory) {
++  const base = resolve(root, directory);
++  const output = [];
++  async function walk(current) {
++    for (const entry of await readdir(current, { withFileTypes: true })) {
++      const path = resolve(current, entry.name);
++      if (entry.isDirectory()) await walk(path);
++      else output.push(relative(base, path).replaceAll('\\', '/'));
++    }
++  }
++  await walk(base);
++  return output.sort();
++}
++
++test('contenedor Android usa versión 1.0.1, WindowInsets y ningún permiso de Internet', async () => {
++  const [gradle, activity, manifest] = await Promise.all([
++    read('app/build.gradle'),
++    read('app/src/main/java/cl/oraculotarotlaura/app/MainActivity.java'),
++    read('app/src/main/AndroidManifest.xml'),
++  ]);
++  assert.match(gradle, /applicationId 'cl\.oraculotarotlaura\.app'/);
++  assert.match(gradle, /versionCode 2/);
++  assert.match(gradle, /versionName '1\.0\.1'/);
++  assert.match(activity, /setOnApplyWindowInsetsListener/);
++  for (const side of ['top','right','bottom','left']) assert.match(activity, new RegExp(`--safe-area-inset-${side}`));
++  assert.match(activity, /onPageFinished/);
++  assert.doesNotMatch(manifest, /android\.permission\.INTERNET/);
++});
++
++test('la aplicación web y android-web están sincronizadas', async () => {
++  const files = ['index.html','styles.css','service-worker.js','manifest.webmanifest','offline.html'];
++  const directories = ['js','assets','icons'];
++  for (const directory of directories) {
++    for (const file of await listFiles(directory)) files.push(`${directory}/${file}`);
++  }
++  for (const file of files) {
++    const [web, android] = await Promise.all([read(file), read(`android-web/${file}`)]);
++    assert.equal(android, web, `Diferencia accidental en ${file}`);
++  }
++});
+diff --git a/tests/static-app.test.mjs b/tests/static-app.test.mjs
+index 9504b9f..fdd3396 100644
+--- a/tests/static-app.test.mjs
++++ b/tests/static-app.test.mjs
+@@ -4,9 +4,9 @@ import { readFile, access } from 'node:fs/promises';
+ import { constants as fsConstants } from 'node:fs';
+ import { resolve, dirname } from 'node:path';
+ import { fileURLToPath } from 'node:url';
+-import { TAROT_CARDS } from '../android-web/js/tarot-data.js';
++import { TAROT_CARDS } from '../js/tarot-data.js';
+ 
+-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'android-web');
++const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+ const read = (path) => readFile(resolve(root, path), 'utf8');
+ const exists = (path) => access(resolve(root, path), fsConstants.F_OK).then(() => true, () => false);
+ 
+@@ -38,6 +38,7 @@ test('manifest tiene configuración PWA e iconos existentes', async () => {
+ 
+ test('service worker precarga el núcleo y las 22 cartas', async () => {
+   const sw = await read('service-worker.js');
++  assert.match(sw, /oraculo-tarot-laura-v2/);
+   for (const path of ['./index.html','./styles.css','./js/app.js','./manifest.webmanifest','./offline.html','./assets/cards/card-back.svg']) {
+     assert.ok(sw.includes(path), `Falta ${path} en la caché esencial`);
+   }
+@@ -55,3 +56,37 @@ test('la aplicación no carga scripts, estilos ni imágenes desde terceros', asy
+     assert.doesNotMatch(content, /@import\s+url\(["']?https?:\/\//i, `${file} importa un recurso externo`);
+   }
+ });
++
++test('todas las pantallas comparten un encabezado fijo y estable', async () => {
++  const [html, css] = await Promise.all([read('index.html'), read('styles.css')]);
++  assert.equal((html.match(/<header class="topbar">/g) || []).length, 1);
++  assert.match(html, /class="icon-button header-slot-empty" id="back-button"/);
++  assert.match(css, /grid-template-columns:\s*56px minmax\(0, 1fr\) 56px/);
++  assert.match(css, /\.header-slot-empty\s*\{[^}]*visibility:\s*hidden/s);
++  assert.match(css, /\.brand-button strong[^}]*white-space:\s*nowrap/s);
++  assert.match(css, /text-overflow:\s*ellipsis/);
++  assert.match(html, />Borrar historial</);
++});
++
++test('áreas seguras, desplazamiento y objetivos táctiles están definidos', async () => {
++  const css = await read('styles.css');
++  for (const side of ['top','right','bottom','left']) assert.match(css, new RegExp(`--safe-area-inset-${side}`));
++  assert.match(css, /overflow-x:\s*hidden/);
++  assert.match(css, /main\s*\{[^}]*padding-bottom:\s*calc\(32px \+ var\(--safe-area-inset-bottom\)\)/s);
++  assert.match(css, /\.button\s*\{[^}]*min-width:\s*48px[^}]*min-height:\s*50px/s);
++  assert.match(css, /\.icon-button\s*\{[^}]*width:\s*48px;\s*height:\s*48px/s);
++  assert.match(css, /\.history-summary\s*\{[^}]*white-space:\s*nowrap/s);
++});
++
++test('modales y compartir/copiar tienen las rutas accesibles requeridas', async () => {
++  const [html, app] = await Promise.all([read('index.html'), read('js/app.js')]);
++  assert.equal((html.match(/aria-modal="true"/g) || []).length, 2);
++  assert.match(app, /dialogReturnFocus/);
++  assert.match(app, /showManagedDialog/);
++  assert.match(app, /restoreDialogFocus/);
++  assert.match(app, /navigator\.share/);
++  assert.match(app, /navigator\.clipboard\?\.writeText/);
++  assert.match(app, /document\.execCommand\('copy'\)/);
++  assert.match(html, /id="share-reading-button"/);
++  assert.match(html, /id="detail-share-button"/);
++});
+diff --git a/tests/tarot-engine.test.mjs b/tests/tarot-engine.test.mjs
+index 3708470..539e5de 100644
+--- a/tests/tarot-engine.test.mjs
++++ b/tests/tarot-engine.test.mjs
+@@ -1,8 +1,8 @@
+ import test from 'node:test';
+ import assert from 'node:assert/strict';
+-import { TAROT_CARDS } from '../android-web/js/tarot-data.js';
+-import { SPREADS, buildReading, drawCards, getSpread, normalizeQuestion, shuffleDeck, validateDeck } from '../android-web/js/tarot-engine.js';
+-import { MAX_HISTORY, clearHistory, deleteReading, getHistory, saveReading } from '../android-web/js/storage.js';
++import { TAROT_CARDS } from '../js/tarot-data.js';
++import { SPREADS, buildReading, drawCards, getSpread, normalizeQuestion, shuffleDeck, validateDeck } from '../js/tarot-engine.js';
++import { MAX_HISTORY, clearHistory, deleteReading, getHistory, saveReading } from '../js/storage.js';
+ 
+ class MemoryStorage {
+   #items = new Map();
