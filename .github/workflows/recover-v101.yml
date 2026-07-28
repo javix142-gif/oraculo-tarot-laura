@@ -10,8 +10,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
-  issues: write
 
 concurrency:
   group: recover-v101-${{ github.ref }}
@@ -96,9 +94,6 @@ jobs:
 
       - name: Normalizar fuente y aplicar cambios aprobados 1.0.1
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
           RECOVERY=/tmp/oraculo-recovery
@@ -116,21 +111,7 @@ jobs:
           cat "$GITHUB_WORKSPACE"/recovery-patch.part* > "$RECOVERY/v101.patch"
           echo 'ba22ca68716bf8d37ab36ad862ed7e8943799631c91ccec0233f74587b47a7e5  /tmp/oraculo-recovery/v101.patch' | sha256sum --check
           cd "$ROOT"
-          git init -q
-          git config user.name 'Recovery Validation'
-          git config user.email 'recovery@users.noreply.github.com'
-          git add -A
-          git commit -qm 'base verificable 1.0.0'
-          if ! git apply --check --verbose "$RECOVERY/v101.patch" > "$RECOVERY/apply-check.txt" 2>&1; then
-            {
-              echo '### Error exacto al aplicar el parche 1.0.1'
-              echo '```text'
-              cat "$RECOVERY/apply-check.txt"
-              echo '```'
-            } > "$RECOVERY/apply-check.md"
-            gh pr comment "$PR_NUMBER" --body-file "$RECOVERY/apply-check.md"
-            exit 1
-          fi
+          git apply --check --verbose "$RECOVERY/v101.patch"
           git apply "$RECOVERY/v101.patch"
 
       - name: Validar fuente 1.0.1 antes de persistir
@@ -157,6 +138,8 @@ jobs:
           grep -F "versionName '1.0.1'" app/build.gradle
           ./gradlew :app:assembleDebug --dry-run
           rm -rf .gradle build app/build
+          rm -rf .git
+          git init -q
           git add -A
           git diff --cached --check
           test "$(git ls-files --cached | wc -l)" -eq 97
@@ -178,4 +161,3 @@ jobs:
           git diff --cached --check
           git commit -m 'fix: recover complete Android source and apply v1.0.1'
           git push origin "HEAD:$TARGET_BRANCH"
-          echo "SOURCE_COMMIT=$(git rev-parse HEAD)" | tee source-commit.txt
