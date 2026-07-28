@@ -1,0 +1,37 @@
+name: Validar aplicación
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Obtener repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Ejecutar pruebas
+        run: node --test
+
+      - name: Validar sintaxis JavaScript
+        run: |
+          node --check js/app.js
+          node --check js/tarot-data.js
+          node --check js/tarot-engine.js
+          node --check js/storage.js
+          node --check service-worker.js
