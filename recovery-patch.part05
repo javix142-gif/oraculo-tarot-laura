@@ -59,7 +59,7 @@ index 0000000..3bb864a
 +    for (const entry of await readdir(current, { withFileTypes: true })) {
 +      const path = resolve(current, entry.name);
 +      if (entry.isDirectory()) await walk(path);
-+      else output.push(relative(base, path).replaceAll('\\', '/'));
++      else output.push(relative(base, path).replaceAll('\\\\', '/'));
 +    }
 +  }
 +  await walk(base);
