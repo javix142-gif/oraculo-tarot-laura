@@ -60,6 +60,11 @@ jobs:
           tar -xzf "$RECOVERY/source.tar.gz" -C "$RECOVERY"
           curl --fail --location --retry 3 "$BASE_URL/oraculo-android-styles.xml" --output "$RECOVERY/styles.xml"
           cp "$RECOVERY/styles.xml" "$RECOVERY/oraculo-tarot-laura-android/app/src/main/res/values/styles.xml"
+          cat > "$RECOVERY/oraculo-tarot-laura-android/build.gradle" <<'GRADLE'
+          plugins {
+              id 'com.android.application' version '8.7.0' apply false
+          }
+          GRADLE
 
       - name: Regenerar Gradle Wrapper 8.9 oficial
         shell: bash
@@ -67,20 +72,18 @@ jobs:
           set -euo pipefail
           RECOVERY=/tmp/oraculo-recovery
           ROOT="$RECOVERY/oraculo-tarot-laura-android"
-          cat > "$ROOT/build.gradle" <<'GRADLE'
-          plugins {
-              id 'com.android.application' version '8.7.0' apply false
-          }
-          GRADLE
+          WRAPPER="$RECOVERY/wrapper-project"
+          mkdir -p "$WRAPPER"
+          printf "rootProject.name = 'wrapper-generator'\n" > "$WRAPPER/settings.gradle"
+          printf "\n" > "$WRAPPER/build.gradle"
           curl --fail --location --retry 3 https://services.gradle.org/distributions/gradle-8.9-bin.zip --output "$RECOVERY/gradle-8.9-bin.zip"
           echo 'd725d707bfabd4dfdc958c624003b3c80accc03f7037b5122c4b1d0ef15cecab  /tmp/oraculo-recovery/gradle-8.9-bin.zip' | sha256sum --check
           unzip -q "$RECOVERY/gradle-8.9-bin.zip" -d "$RECOVERY/gradle-dist"
-          cd "$ROOT"
+          cd "$WRAPPER"
           "$RECOVERY/gradle-dist/gradle-8.9/bin/gradle" wrapper \
             --gradle-version 8.9 \
             --distribution-type bin \
             --gradle-distribution-sha256-sum d725d707bfabd4dfdc958c624003b3c80accc03f7037b5122c4b1d0ef15cecab
-          chmod +x gradlew
           test -f gradlew
           test -f gradlew.bat
           test -f gradle/wrapper/gradle-wrapper.jar
@@ -88,6 +91,11 @@ jobs:
           grep -F 'distributionUrl=https\://services.gradle.org/distributions/gradle-8.9-bin.zip' gradle/wrapper/gradle-wrapper.properties
           grep -F 'distributionSha256Sum=d725d707bfabd4dfdc958c624003b3c80accc03f7037b5122c4b1d0ef15cecab' gradle/wrapper/gradle-wrapper.properties
           echo '498495120a03b9a6ab5d155f5de3c8f0d986a449153702fb80fc80e134484f17  gradle/wrapper/gradle-wrapper.jar' | sha256sum --check
+          mkdir -p "$ROOT/gradle/wrapper"
+          cp gradlew gradlew.bat "$ROOT/"
+          cp gradle/wrapper/gradle-wrapper.jar gradle/wrapper/gradle-wrapper.properties "$ROOT/gradle/wrapper/"
+          chmod +x "$ROOT/gradlew"
+          cd "$ROOT"
           ./gradlew --version | tee "$RECOVERY/gradle-version.txt"
           grep -F 'Gradle 8.9' "$RECOVERY/gradle-version.txt"
           grep -E 'JVM:.*17|Launcher JVM:.*17' "$RECOVERY/gradle-version.txt"
@@ -137,8 +145,7 @@ jobs:
           grep -F 'versionCode 2' app/build.gradle
           grep -F "versionName '1.0.1'" app/build.gradle
           ./gradlew :app:assembleDebug --dry-run
-          rm -rf .gradle build app/build
-          rm -rf .git
+          rm -rf .gradle build app/build .git
           git init -q
           git add -A
           git diff --cached --check
