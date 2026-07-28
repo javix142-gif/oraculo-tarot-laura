@@ -4,7 +4,8 @@
 
 - Proyecto: Oráculo Tarot Laura — Lectura y Cartas
 - Versión: 1.0.1
-- Rama objetivo: `main`
+- Rama activa: `main`
+- Commit de recuperación integrado: `f3f759ac401a2ee1524ca371e422d97e5fd1890c`
 - applicationId: `cl.oraculotarotlaura.app`
 - versionCode: `2`
 - versionName: `1.0.1`
@@ -36,6 +37,9 @@ Aplicación web estática en la raíz y copia sincronizada en `android-web/`. Un
 - `tests/static-app.test.mjs`
 - `tests/android-container.test.mjs`
 - `gradle/wrapper/`
+- `.github/workflows/validate.yml`
+- `.github/workflows/build-apk.yml`
+- `.github/workflows/deploy-pages.yml`
 
 ## Comandos
 
@@ -47,24 +51,37 @@ node --check js/app.js
 ./gradlew :app:assembleDebug --build-cache
 ```
 
-## Validaciones esperadas
+## Validaciones completadas
 
-- 19 pruebas web y lógica.
-- 2 pruebas del contenedor y sincronización.
-- Total: 21 pruebas.
-- Gradle Wrapper y dry-run antes de persistir.
-- Un único build debug después del commit.
-
-## Riesgos y pendientes
-
-- Comprobar el APK en un teléfono físico.
-- Comparar el certificado debug con el APK 1.0.0 antes de afirmar actualización directa.
-- Una desinstalación elimina el historial guardado en localStorage.
+- 19 pruebas web y lógica aprobadas.
+- 2 pruebas del contenedor y sincronización aprobadas.
+- Total: 21/21 pruebas aprobadas.
+- Sintaxis JavaScript aprobada.
+- 22 cartas y 22 identificadores únicos verificados.
+- Web y `android-web` sincronizados.
+- Gradle Wrapper 8.9 verificado con JDK 17.
+- `gradle-wrapper.jar` SHA-256: `498495120a03b9a6ab5d155f5de3c8f0d986a449153702fb80fc80e134484f17`.
+- `:app:assembleDebug --dry-run` aprobado.
+- `git diff --check` aprobado.
+- Una única compilación `:app:assembleDebug --build-cache` aprobada.
+- APK validado con `aapt`, `apksigner` y comprobación ZIP en GitHub Actions.
 
 ## Último artefacto válido
 
-Pendiente de generar después de persistir el commit completo 1.0.1.
+- Archivo: `Oraculo-Tarot-Laura-v1.0.1.apk`
+- Tamaño: `84998` bytes.
+- SHA-256: `0ed43ae4dc4c6a8b61c2471e82b6c91fd56da1f0e789e36c1d8c77c9d0be9253`.
+- Certificado debug SHA-256: `57:CC:31:3B:AD:2C:B5:64:A4:85:B1:78:58:D8:07:AE:BE:85:54:D7:12:8A:A0:53:47:6B:18:E5:27:A3:7A:E7`.
+- Build de GitHub Actions: `30366934262`.
+
+## Riesgos y pendientes
+
+- No se probó todavía en un teléfono físico.
+- El certificado no coincide con el APK 1.0.0, cuyo SHA-256 era `2A:41:87:FC:73:EF:0C:19:B4:59:97:14:9E:7B:7A:5B:C2:18:94:81:A2:71:02:01:A8:D5:F3:E1:97:6D:5D:3E`.
+- La versión 1.0.1 no puede instalarse directamente sobre la 1.0.0. Debe desinstalarse la anterior.
+- Desinstalar elimina el historial guardado en localStorage.
+- La firma debug no es una firma permanente para futuras entregas.
 
 ## Próxima acción
 
-Persistir la fuente completa y limpia en GitHub; después ejecutar una única compilación debug y verificar el APK.
+Instalar el APK 1.0.1 en un teléfono después de desinstalar la versión 1.0.0 y realizar la revisión visual de safe areas, encabezado, navegación, modales y compartir/copiar.
