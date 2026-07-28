@@ -20,62 +20,59 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
-      - name: Reproducir normalización y verificar parche
+      - name: Reproducir normalización y publicar resultado
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         shell: bash
         run: |
-          set -Eeuo pipefail
-          report_error() {
-            status=$?
-            set +e
-            {
-              echo '### Falla exacta de normalización del parche'
-              echo '```text'
-              echo "estado=$status"
-              echo "linea=$1"
-              echo "comando=$2"
-              test -f /tmp/apply.log && cat /tmp/apply.log
-              echo '```'
-            } > /tmp/apply-error.md
-            gh pr comment "$PR_NUMBER" --body-file /tmp/apply-error.md
-            exit "$status"
-          }
-          trap 'report_error "$LINENO" "$BASH_COMMAND"' ERR
-          RECOVERY=/tmp/apply-diagnostic
-          ARCHIVE="$RECOVERY/archive"
-          PINNED=291469b0af91f4956c95395ac806171a04c24922
-          BASE_URL="https://raw.githubusercontent.com/javix142-gif/Prueba-de-Qwen/$PINNED"
-          mkdir -p "$ARCHIVE"
-          for part in 00 01 02 03 04 05 06; do
-            curl --fail --location --retry 3 "$BASE_URL/oraculo-source.part$part" --output "$ARCHIVE/oraculo-source.part$part"
-          done
-          cat "$ARCHIVE"/oraculo-source.part* > "$RECOVERY/source.tar.gz.b64"
-          base64 --decode "$RECOVERY/source.tar.gz.b64" > "$RECOVERY/source.tar.gz"
-          tar -xzf "$RECOVERY/source.tar.gz" -C "$RECOVERY"
-          ROOT="$RECOVERY/oraculo-tarot-laura-android"
-          curl --fail --location --retry 3 "$BASE_URL/oraculo-android-styles.xml" --output "$RECOVERY/styles.xml"
-          cp "$RECOVERY/styles.xml" "$ROOT/app/src/main/res/values/styles.xml"
-          cat > "$ROOT/build.gradle" <<'GRADLE'
-          plugins {
-              id 'com.android.application' version '8.7.0' apply false
-          }
-          GRADLE
-          cp "$ROOT/android-web/index.html" "$ROOT/index.html"
-          cp "$ROOT/android-web/styles.css" "$ROOT/styles.css"
-          cp "$ROOT/android-web/service-worker.js" "$ROOT/service-worker.js"
-          cp "$ROOT/android-web/manifest.webmanifest" "$ROOT/manifest.webmanifest"
-          cp "$ROOT/android-web/offline.html" "$ROOT/offline.html"
-          cp -a "$ROOT/android-web/js" "$ROOT/js"
-          cp -a "$ROOT/android-web/assets" "$ROOT/assets"
-          cp -a "$ROOT/android-web/icons" "$ROOT/icons"
-          cat "$GITHUB_WORKSPACE"/recovery-patch.part* > "$RECOVERY/v101.patch"
-          cd "$ROOT"
-          git init -q
-          git config user.name 'Apply Diagnostic'
-          git config user.email 'diagnostic@users.noreply.github.com'
-          git add -A
-          git commit -qm 'base'
-          git apply --check --verbose "$RECOVERY/v101.patch" 2>&1 | tee /tmp/apply.log
-          gh pr comment "$PR_NUMBER" --body 'Diagnóstico mínimo: el parche se puede aplicar correctamente.'
+          set +e
+          (
+            set -euxo pipefail
+            RECOVERY=/tmp/apply-diagnostic
+            ARCHIVE="$RECOVERY/archive"
+            PINNED=291469b0af91f4956c95395ac806171a04c24922
+            BASE_URL="https://raw.githubusercontent.com/javix142-gif/Prueba-de-Qwen/$PINNED"
+            mkdir -p "$ARCHIVE"
+            for part in 00 01 02 03 04 05 06; do
+              curl --fail --location --retry 3 "$BASE_URL/oraculo-source.part$part" --output "$ARCHIVE/oraculo-source.part$part"
+            done
+            cat "$ARCHIVE"/oraculo-source.part* > "$RECOVERY/source.tar.gz.b64"
+            base64 --decode "$RECOVERY/source.tar.gz.b64" > "$RECOVERY/source.tar.gz"
+            tar -xzf "$RECOVERY/source.tar.gz" -C "$RECOVERY"
+            ROOT="$RECOVERY/oraculo-tarot-laura-android"
+            curl --fail --location --retry 3 "$BASE_URL/oraculo-android-styles.xml" --output "$RECOVERY/styles.xml"
+            cp "$RECOVERY/styles.xml" "$ROOT/app/src/main/res/values/styles.xml"
+            cat > "$ROOT/build.gradle" <<'GRADLE'
+            plugins {
+                id 'com.android.application' version '8.7.0' apply false
+            }
+            GRADLE
+            cp "$ROOT/android-web/index.html" "$ROOT/index.html"
+            cp "$ROOT/android-web/styles.css" "$ROOT/styles.css"
+            cp "$ROOT/android-web/service-worker.js" "$ROOT/service-worker.js"
+            cp "$ROOT/android-web/manifest.webmanifest" "$ROOT/manifest.webmanifest"
+            cp "$ROOT/android-web/offline.html" "$ROOT/offline.html"
+            cp -a "$ROOT/android-web/js" "$ROOT/js"
+            cp -a "$ROOT/android-web/assets" "$ROOT/assets"
+            cp -a "$ROOT/android-web/icons" "$ROOT/icons"
+            cat "$GITHUB_WORKSPACE"/recovery-patch.part* > "$RECOVERY/v101.patch"
+            cd "$ROOT"
+            git init -q
+            git config user.name 'Apply Diagnostic'
+            git config user.email 'diagnostic@users.noreply.github.com'
+            git add -A
+            git commit -qm 'base'
+            git apply --check --verbose "$RECOVERY/v101.patch"
+          ) > /tmp/apply-diagnostic.log 2>&1
+          status=$?
+          set -e
+          {
+            echo '### Resultado exacto de normalización del parche'
+            echo '```text'
+            echo "estado=$status"
+            tail -n 120 /tmp/apply-diagnostic.log
+            echo '```'
+          } > /tmp/apply-diagnostic.md
+          gh pr comment "$PR_NUMBER" --body-file /tmp/apply-diagnostic.md
+          exit "$status"
