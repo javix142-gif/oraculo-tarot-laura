@@ -14,22 +14,22 @@ async function listFiles(directory) {
     for (const entry of await readdir(current, { withFileTypes: true })) {
       const path = resolve(current, entry.name);
       if (entry.isDirectory()) await walk(path);
-      else output.push(relative(base, path).replaceAll('\\\\', '/'));
+      else output.push(relative(base, path).replaceAll('\\', '/'));
     }
   }
   await walk(base);
   return output.sort();
 }
 
-test('contenedor Android usa versión 1.0.1, WindowInsets y ningún permiso de Internet', async () => {
+test('contenedor Android usa versión 1.0.2, WindowInsets y ningún permiso de Internet', async () => {
   const [gradle, activity, manifest] = await Promise.all([
     read('app/build.gradle'),
     read('app/src/main/java/cl/oraculotarotlaura/app/MainActivity.java'),
     read('app/src/main/AndroidManifest.xml'),
   ]);
   assert.match(gradle, /applicationId 'cl\.oraculotarotlaura\.app'/);
-  assert.match(gradle, /versionCode 2/);
-  assert.match(gradle, /versionName '1\.0\.1'/);
+  assert.match(gradle, /versionCode 3/);
+  assert.match(gradle, /versionName '1\.0\.2'/);
   assert.match(activity, /setOnApplyWindowInsetsListener/);
   for (const side of ['top','right','bottom','left']) assert.match(activity, new RegExp(`--safe-area-inset-${side}`));
   assert.match(activity, /onPageFinished/);
