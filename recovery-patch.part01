@@ -1,0 +1,357 @@
+cionada. Toda actualización debe estar justificada, delimitada y validada.
++
++### 18. Alcance mínimo
++
++No realizar refactors globales cuando basta un cambio localizado. No agregar funciones, rediseños o mejoras opcionales después de completar la solicitud.
++
++### 19. Estado del proyecto
++
++Mantener `PROJECT_STATE.md` actualizado con:
++
++- versión vigente;
++- rama activa;
++- arquitectura;
++- archivos relevantes;
++- funciones implementadas;
++- problemas pendientes;
++- comandos de prueba y build;
++- último artefacto válido;
++- próxima acción recomendada.
++
++No actualizarlo por cambios triviales que no alteren el estado real del proyecto.
++
++### 20. Instrucciones para agentes
++
++Registrar en `AGENTS.md`:
++
++- estructura real del repositorio;
++- comandos exactos;
++- archivos permitidos;
++- archivos prohibidos;
++- pruebas requeridas;
++- forma de generar entregables;
++- reglas de seguridad;
++- definición de terminado.
++
++### 21. Transparencia sobre demoras
++
++Cuando una operación demore más de lo esperado, informar con evidencia qué etapa consumió tiempo:
++
++- preparación del entorno;
++- descarga de dependencias;
++- pruebas;
++- lint;
++- compilación;
++- firma;
++- empaquetado;
++- publicación;
++- transferencia.
++
++No atribuir la demora a una causa sin evidencia.
++
++### 22. Evidencia obligatoria
++
++No afirmar que una prueba, compilación, publicación, firma, instalación o transferencia se completó sin evidencia real.
++
++### 23. Criterio de cierre
++
++La tarea termina cuando:
++
++- el cambio solicitado está implementado;
++- se ejecutaron las validaciones apropiadas;
++- se revisó el diff;
++- no existen cambios fuera de alcance;
++- se generaron únicamente los entregables solicitados;
++- se informaron riesgos, pruebas pendientes y limitaciones.
++
++### 24. Reutilización futura
++
++Aplicar estas reglas automáticamente en solicitudes futuras de este proyecto. En nuevos proyectos, copiar o adaptar este archivo al repositorio al iniciar el trabajo y referenciarlo desde `AGENTS.md` y `PROJECT_STATE.md`.
++
++## Precedencia
++
++Ante conflicto, aplicar este orden:
++
++1. solicitud actual del usuario;
++2. seguridad, protección de datos y acciones reversibles;
++3. instrucciones específicas del repositorio;
++4. este archivo;
++5. convenciones generales del proyecto.
++
++## Control de cambios
++
++- Fecha de incorporación: 2026-07-28.
++- Motivo: reducir tiempos y tareas redundantes conservando evidencia, seguridad y calidad.
++- Cambio funcional en la aplicación: ninguno.
++- Build ejecutado por esta actualización documental: no.
+diff --git a/PROJECT_STATE.md b/PROJECT_STATE.md
+index 8a0e6b0..46bf43b 100644
+--- a/PROJECT_STATE.md
++++ b/PROJECT_STATE.md
+@@ -1,24 +1,70 @@
+ # PROJECT_STATE.md
+ 
+-## Objetivo
++## Estado vigente
+ 
+-Generar un APK instalable de Oráculo Tarot Laura a partir de la PWA validada.
++- Proyecto: Oráculo Tarot Laura — Lectura y Cartas
++- Versión: 1.0.1
++- Rama objetivo: `main`
++- applicationId: `cl.oraculotarotlaura.app`
++- versionCode: `2`
++- versionName: `1.0.1`
++- Android Gradle Plugin: `8.7.0`
++- Gradle: `8.9`
++- JDK: `17`
+ 
+-## Estado
++## Arquitectura
+ 
+-- Contenedor Android implementado.
+-- Aplicación web incluida como assets locales.
+-- Compilación automatizada mediante GitHub Actions.
+-- Rama de trabajo aislada de la rama principal del repositorio anfitrión.
++Aplicación web estática en la raíz y copia sincronizada en `android-web/`. Una Activity Java muestra los assets locales mediante WebView y transmite WindowInsets a variables CSS. No existe backend ni permiso de Internet.
+ 
+-## Validaciones previstas
++## Funciones implementadas
+ 
+-- `node --test tests`
+-- `node --check` para JavaScript y Service Worker
+-- `gradle lintDebug assembleDebug`
+-- SHA-256 y tamaño del APK
++- 22 Arcanos Mayores sin repetición.
++- Tiradas de una y tres cartas.
++- Historial local de máximo 20.
++- PWA offline.
++- Safe areas top, right, bottom y left.
++- Encabezado común con grid `56px / minmax(0, 1fr) / 56px`.
++- Modales con foco, Escape, `aria-modal` y retorno del foco.
++- Compartir lectura con Web Share API y copia compatible.
+ 
+-## Riesgos
++## Archivos relevantes
+ 
+-- El APK de esta entrega usa firma de depuración generada por CI; futuras actualizaciones necesitan conservar una clave de firma estable.
+-- No se afirma prueba en dispositivo físico hasta instalar el artefacto en Android.
++- `app/src/main/java/cl/oraculotarotlaura/app/MainActivity.java`
++- `app/build.gradle`
++- `android-web/`
++- `index.html`, `styles.css`, `js/app.js`, `service-worker.js`
++- `tests/static-app.test.mjs`
++- `tests/android-container.test.mjs`
++- `gradle/wrapper/`
++
++## Comandos
++
++```bash
++node --test
++node --check js/app.js
++./gradlew --version
++./gradlew :app:assembleDebug --dry-run
++./gradlew :app:assembleDebug --build-cache
++```
++
++## Validaciones esperadas
++
++- 19 pruebas web y lógica.
++- 2 pruebas del contenedor y sincronización.
++- Total: 21 pruebas.
++- Gradle Wrapper y dry-run antes de persistir.
++- Un único build debug después del commit.
++
++## Riesgos y pendientes
++
++- Comprobar el APK en un teléfono físico.
++- Comparar el certificado debug con el APK 1.0.0 antes de afirmar actualización directa.
++- Una desinstalación elimina el historial guardado en localStorage.
++
++## Último artefacto válido
++
++Pendiente de generar después de persistir el commit completo 1.0.1.
++
++## Próxima acción
++
++Persistir la fuente completa y limpia en GitHub; después ejecutar una única compilación debug y verificar el APK.
+diff --git a/README.md b/README.md
+index 2abbe5f..6f94fed 100644
+--- a/README.md
++++ b/README.md
+@@ -1,28 +1,69 @@
+-# Oráculo Tarot Laura — APK Android
++# Oráculo Tarot Laura — Lectura y Cartas
+ 
+-Contenedor Android mínimo para la PWA “Oráculo Tarot Laura — Lectura y Cartas”. La aplicación web se ejecuta desde recursos incluidos dentro del APK mediante un `WebView`, sin permiso de Internet y sin servicios externos.
++Aplicación web móvil, PWA y contenedor Android local para lecturas recreativas con los 22 Arcanos Mayores. No utiliza backend, inteligencia artificial, cuentas, publicidad ni servicios externos.
+ 
+-## Identidad
++> Esta aplicación es una simulación destinada al entretenimiento y la reflexión personal. No garantiza predicciones ni reemplaza asesoramiento profesional.
+ 
+-- `applicationId`: `cl.oraculotarotlaura.app`
+-- `versionCode`: `1`
+-- `versionName`: `1.0.0`
+-- `minSdk`: 23
+-- `targetSdk`: 35
++## Versión
+ 
+-## Compilación
++- Versión: `1.0.1`
++- Android applicationId: `cl.oraculotarotlaura.app`
++- Android versionCode: `2`
++- Android Gradle Plugin: `8.7.0`
++- Gradle Wrapper: `8.9`
++- JDK requerido: `17`
+ 
+-La rama de compilación usa GitHub Actions con JDK 17, Gradle 8.13 y Android Gradle Plugin 8.11.1.
++## Funciones
++
++- Carta del día y tirada Pasado, Presente y Futuro.
++- Selección sin repetición de exactamente 22 Arcanos Mayores.
++- Historial local de hasta 20 lecturas.
++- Compartir mediante Web Share API y copia compatible como alternativa.
++- Safe areas web y transmisión de WindowInsets desde Android.
++- PWA offline y contenedor Android sin permiso de Internet.
++
++## Estructura
++
++```text
++.
++├── index.html, styles.css, service-worker.js
++├── js/ y assets/                 # aplicación web oficial
++├── android-web/                  # copia sincronizada incluida en el APK
++├── app/                          # contenedor Android
++├── gradle/wrapper/ y gradlew     # Gradle Wrapper 8.9
++├── tests/                        # 21 pruebas Node
++├── .github/workflows/            # validación, Pages manual y APK
++├── AGENTS.md
++├── PROJECT_STATE.md
++└── OPTIMIZACION_DESARROLLO.md
++```
++
++## Validación
+ 
+ ```bash
+-gradle clean lintDebug assembleDebug
++node --test
++node --check js/app.js
++node --check js/tarot-data.js
++node --check js/tarot-engine.js
++node --check js/storage.js
++node --check service-worker.js
++./gradlew :app:assembleDebug --dry-run
+ ```
+ 
+-El APK generado es instalable y está firmado automáticamente con la clave de depuración del entorno de CI. Es apropiado para pruebas directas, no para publicación en Google Play ni para garantizar continuidad de firma en futuras actualizaciones.
++## APK debug
++
++```bash
++./gradlew :app:assembleDebug --build-cache
++```
++
++El resultado queda en `app/build/outputs/apk/debug/app-debug.apk`. El APK debug usa una firma de desarrollo; no debe considerarse una firma permanente de distribución.
++
++## GitHub Pages
++
++La publicación web es manual mediante `.github/workflows/deploy-pages.yml`, para evitar despliegues no solicitados durante cambios Android.
+ 
+-## Seguridad
++## Limitaciones
+ 
+-- Sin permiso `INTERNET`.
+-- Sin acceso a archivos o contenido del dispositivo desde WebView.
+-- Solo se sirven recursos empaquetados bajo `appassets.androidplatform.net`.
+-- El historial permanece en el almacenamiento local del WebView.
++- Solo Arcanos Mayores y cartas derechas.
++- No se garantiza actualización sobre APK anteriores sin comprobar applicationId, versionCode y certificado.
++- La validación en un teléfono físico debe informarse por separado.
+diff --git a/android-web/index.html b/android-web/index.html
+index 7cb7c51..1f586cd 100644
+--- a/android-web/index.html
++++ b/android-web/index.html
+@@ -15,7 +15,7 @@
+   <a class="skip-link" href="#main-content">Saltar al contenido</a>
+   <div class="app-shell">
+     <header class="topbar">
+-      <button class="icon-button hidden" id="back-button" type="button" aria-label="Volver">←</button>
++      <button class="icon-button header-slot-empty" id="back-button" type="button" aria-label="Volver" aria-hidden="true" tabindex="-1">←</button>
+       <button class="brand-button" id="home-brand" type="button" aria-label="Ir al inicio">
+         <span class="brand-mark" aria-hidden="true">✦</span>
+         <span><strong>Oráculo Tarot Laura</strong><small>Lectura y Cartas</small></span>
+@@ -96,6 +96,7 @@
+         <div class="result-cards" id="result-cards"></div>
+         <div class="result-actions">
+           <button class="button button-primary" id="new-reading-button" type="button">Nueva lectura</button>
++          <button class="button button-secondary" id="share-reading-button" type="button">Compartir lectura</button>
+           <button class="button button-secondary" id="result-home-button" type="button">Volver al inicio</button>
+         </div>
+         <p class="reflection-note">Las cartas ofrecen símbolos para reflexionar. Tú decides qué interpretación resulta útil para tu situación.</p>
+@@ -107,7 +108,7 @@
+             <span class="eyebrow">Guardado solo en este dispositivo</span>
+             <h2 id="history-title">Historial</h2>
+           </div>
+-          <button class="text-button danger hidden" id="clear-history-button" type="button">Eliminar todo</button>
++          <button class="text-button danger hidden" id="clear-history-button" type="button">Borrar historial</button>
+         </div>
+         <div id="history-empty" class="empty-state" hidden>
+           <span aria-hidden="true">☾</span>
+@@ -126,13 +127,16 @@
+         </div>
+         <div id="detail-question" class="result-question" hidden></div>
+         <div class="result-cards" id="detail-cards"></div>
++        <div class="result-actions detail-actions">
++          <button class="button button-secondary" id="detail-share-button" type="button">Compartir lectura</button>
++        </div>
+       </section>
+     </main>
+ 
+     <footer><span>Uso recreativo y reflexivo</span><span aria-hidden="true">·</span><span>Sin datos en servidores</span></footer>
+   </div>
+ 
+-  <dialog id="about-dialog" aria-labelledby="about-title">
++  <dialog id="about-dialog" aria-labelledby="about-title" aria-modal="true">
+     <div class="dialog-card">
+       <button class="dialog-close" id="close-about-button" type="button" aria-label="Cerrar">×</button>
+       <span class="dialog-symbol" aria-hidden="true">✦</span>
+@@ -144,7 +148,7 @@
+     </div>
+   </dialog>
+ 
+-  <dialog id="confirm-dialog" aria-labelledby="confirm-title">
++  <dialog id="confirm-dialog" aria-labelledby="confirm-title" aria-modal="true">
+     <form method="dialog" class="dialog-card compact-dialog">
+       <h2 id="confirm-title">Eliminar historial</h2>
+       <p id="confirm-message">Esta acción no se puede deshacer.</p>
+diff --git a/android-web/js/app.js b/android-web/js/app.js
+index 1a15f5c..0e7a327 100644
+--- a/android-web/js/app.js
++++ b/android-web/js/app.js
+@@ -14,6 +14,7 @@ const state = {
+ };
+ 
+ const elements = {};
++const dialogReturnFocus = new WeakMap();
+ let toastTimer;
+ 
+ function queryElements() {
+@@ -21,8 +22,8 @@ function queryElements() {
+     'back-button', 'home-brand', 'about-button', 'start-button', 'history-button', 'install-button',
+     'reading-form', 'question-input', 'question-count', 'remaining-count', 'draw-instruction',
+     'reading-context', 'shuffle-status', 'deck-grid', 'selection-progress', 'result-date',
+-    'result-question', 'result-cards', 'new-reading-button', 'result-home-button', 'clear-history-button',
+-    'history-empty', 'history-list', 'empty-start-button', 'detail-date', 'detail-question', 'detail-cards',
++    'result-question', 'result-cards', 'new-reading-button', 'share-reading-button', 'result-home-button', 'clear-history-button',
++    'history-empty', 'history-list', 'empty-start-button', 'detail-date', 'detail-question', 'detail-cards', 'detail-share-button',
+     'about-dialog', 'close-about-button', 'dialog-ok-button', 'confirm-dialog', 'confirm-message', 'toast',
+   ];
+   ids.forEach((id) => { elements[toCamel(id)] = document.getElementById(id); });
+@@ -41,6 +42,7 @@ function init() {
+   }
+   bindEvents();
+   renderHistory();
++  updateShareButtonLabels();
+   registerServiceWorker();
+   showScreen('home', { replaceHistory: true, focus: false });
+ }
+@@ -51,7 +53,7 @@ function bindEvents() {
+   elements.historyButton.addEventListener('click', () => { renderHistory()
