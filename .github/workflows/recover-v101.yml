@@ -118,6 +118,7 @@ jobs:
             cp -a "$ROOT/android-web/assets" "$ROOT/assets"
             cp -a "$ROOT/android-web/icons" "$ROOT/icons"
             rm -rf "$ROOT/.gradle" "$ROOT/build" "$ROOT/app/build"
+            rm -f "$ROOT/.gitignore"
             cat "$GITHUB_WORKSPACE"/recovery-patch.part* > "$RECOVERY/v101.patch"
             echo 'ba22ca68716bf8d37ab36ad862ed7e8943799631c91ccec0233f74587b47a7e5  /tmp/oraculo-recovery/v101.patch' | sha256sum --check
             cd "$ROOT"
