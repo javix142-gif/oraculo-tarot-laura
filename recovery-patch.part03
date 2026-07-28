@@ -1,0 +1,245 @@
+tem-ui,sans-serif; font-weight: 700; }
+-.text-button.danger { color: var(--danger); }
++.text-button.danger { color: var(--danger); white-space: nowrap; }
+ .history-list { display: grid; gap: 12px; }
+ .history-item { display: grid; grid-template-columns: 1fr 48px; border: 1px solid rgba(197,184,239,.17); border-radius: 16px; background: var(--panel); overflow: hidden; }
+ .history-open { display: grid; gap: 5px; min-height: 86px; padding: 14px 16px; border: 0; background: transparent; text-align: left; cursor: pointer; }
+@@ -156,8 +173,8 @@ textarea::placeholder { color: #8d86a2; }
+ .empty-state { margin-top: 8vh; padding: 32px 20px; text-align: center; border: 1px dashed rgba(228,193,111,.28); border-radius: 22px; background: rgba(27,18,62,.55); }
+ .empty-state > span { display: block; color: var(--gold); font-size: 3rem; }
+ .empty-state p { color: var(--muted); font-family: system-ui,sans-serif; }
+-footer { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; padding: 28px 8px 18px; color: #8d86a2; font-family: system-ui,sans-serif; font-size: .7rem; }
+-dialog { width: min(calc(100% - 28px), 500px); padding: 0; border: 1px solid rgba(228,193,111,.32); border-radius: 22px; color: var(--text); background: var(--panel-solid); box-shadow: var(--shadow); }
++footer { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; padding: 28px 8px calc(18px + var(--safe-area-inset-bottom)); color: #8d86a2; font-family: system-ui,sans-serif; font-size: .7rem; }
++dialog { width: min(calc(100% - 28px - var(--safe-area-inset-left) - var(--safe-area-inset-right)), 500px); max-height: calc(100dvh - 28px - var(--safe-area-inset-top) - var(--safe-area-inset-bottom)); overflow: auto; padding: 0; border: 1px solid rgba(228,193,111,.32); border-radius: 22px; color: var(--text); background: var(--panel-solid); box-shadow: var(--shadow); }
+ dialog::backdrop { background: rgba(3,2,12,.78); backdrop-filter: blur(5px); }
+ .dialog-card { position: relative; padding: 28px 22px 22px; text-align: center; }
+ .dialog-card p { color: var(--muted); font-family: system-ui,sans-serif; line-height: 1.55; }
+@@ -165,7 +182,7 @@ dialog::backdrop { background: rgba(3,2,12,.78); backdrop-filter: blur(5px); }
+ .dialog-symbol { display: block; margin-bottom: 8px; color: var(--gold); font-size: 2rem; }
+ .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 22px; }
+ .compact-dialog { text-align: left; }
+-.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 80; max-width: calc(100% - 32px); padding: 12px 16px; border: 1px solid rgba(228,193,111,.3); border-radius: 99px; background: #221647; color: var(--text); box-shadow: 0 10px 34px rgba(0,0,0,.35); font-family: system-ui,sans-serif; font-size: .82rem; transform: translate(-50%, 30px); opacity: 0; pointer-events: none; transition: .22s ease; }
++.toast { position: fixed; left: 50%; bottom: calc(20px + var(--safe-area-inset-bottom)); z-index: 80; max-width: calc(100% - 32px); padding: 12px 16px; border: 1px solid rgba(228,193,111,.3); border-radius: 99px; background: #221647; color: var(--text); box-shadow: 0 10px 34px rgba(0,0,0,.35); font-family: system-ui,sans-serif; font-size: .82rem; transform: translate(-50%, 30px); opacity: 0; pointer-events: none; transition: .22s ease; }
+ .toast.visible { opacity: 1; transform: translate(-50%,0); }
+ noscript { display: block; padding: 20px; color: white; background: #6d1f35; font-family: system-ui,sans-serif; }
+ 
+@@ -174,7 +191,7 @@ noscript { display: block; padding: 20px; color: white; background: #6d1f35; fon
+ @keyframes selected-rise { 50% { transform: translateY(-7px); } }
+ 
+ @media (min-width: 520px) {
+-  .app-shell { padding-inline: 24px; }
++  .app-shell { padding-left: calc(24px + var(--safe-area-inset-left)); padding-right: calc(24px + var(--safe-area-inset-right)); }
+   .hero-card { padding: 50px 46px 38px; }
+   .primary-actions { grid-template-columns: 1fr 1fr; }
+   .primary-actions .button-primary, .primary-actions .button-ghost { grid-column: 1 / -1; }
+@@ -188,7 +205,7 @@ noscript { display: block; padding: 20px; color: white; background: #6d1f35; fon
+   .result-cards.timeline .result-card { grid-template-columns: 1fr; }
+ }
+ @media (max-width: 380px) {
+-  .app-shell { padding-inline: 10px; }
++  .app-shell { padding-left: calc(10px + var(--safe-area-inset-left)); padding-right: calc(10px + var(--safe-area-inset-right)); }
+   .deck-grid { gap: 7px 5px; }
+   .result-card { grid-template-columns: 96px 1fr; gap: 12px; padding: 12px; }
+   .interpretation { font-size: .84rem; }
+diff --git a/app/build.gradle b/app/build.gradle
+index 50af7d5..64bcd93 100644
+--- a/app/build.gradle
++++ b/app/build.gradle
+@@ -10,8 +10,8 @@ android {
+         applicationId 'cl.oraculotarotlaura.app'
+         minSdk 23
+         targetSdk 35
+-        versionCode 1
+-        versionName '1.0.0'
++        versionCode 2
++        versionName '1.0.1'
+     }
+ 
+     sourceSets {
+diff --git a/app/src/main/java/cl/oraculotarotlaura/app/MainActivity.java b/app/src/main/java/cl/oraculotarotlaura/app/MainActivity.java
+index 2ce8da4..30df6fe 100644
+--- a/app/src/main/java/cl/oraculotarotlaura/app/MainActivity.java
++++ b/app/src/main/java/cl/oraculotarotlaura/app/MainActivity.java
+@@ -5,7 +5,9 @@ import android.app.Activity;
+ import android.graphics.Color;
+ import android.net.Uri;
+ import android.os.Bundle;
++import android.view.View;
+ import android.view.ViewGroup;
++import android.view.WindowInsets;
+ import android.webkit.WebResourceRequest;
+ import android.webkit.WebResourceResponse;
+ import android.webkit.WebSettings;
+@@ -23,23 +25,35 @@ public final class MainActivity extends Activity {
+     private static final String START_URL = APP_ORIGIN + ASSET_PREFIX + "index.html";
+ 
+     private WebView webView;
++    private int insetTop;
++    private int insetRight;
++    private int insetBottom;
++    private int insetLeft;
+ 
+     @Override
+     protected void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+ 
+-        getWindow().setStatusBarColor(Color.rgb(18, 12, 47));
+-        getWindow().setNavigationBarColor(Color.rgb(18, 12, 47));
++        getWindow().setStatusBarColor(Color.TRANSPARENT);
++        getWindow().setNavigationBarColor(Color.TRANSPARENT);
++        getWindow().getDecorView().setSystemUiVisibility(
++                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
++                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
++                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
++        );
+ 
+         webView = new WebView(this);
+         webView.setBackgroundColor(Color.rgb(18, 12, 47));
++        webView.setFitsSystemWindows(false);
+         webView.setLayoutParams(new ViewGroup.LayoutParams(
+                 ViewGroup.LayoutParams.MATCH_PARENT,
+                 ViewGroup.LayoutParams.MATCH_PARENT
+         ));
+ 
+         configureWebView(webView);
++        configureWindowInsets(webView);
+         setContentView(webView);
++        webView.requestApplyInsets();
+ 
+         if (savedInstanceState == null || webView.restoreState(savedInstanceState) == null) {
+             webView.loadUrl(START_URL);
+@@ -64,6 +78,26 @@ public final class MainActivity extends Activity {
+         view.setWebViewClient(new LocalAssetWebViewClient());
+     }
+ 
++    private void configureWindowInsets(WebView view) {
++        view.setOnApplyWindowInsetsListener((target, insets) -> {
++            insetTop = insets.getSystemWindowInsetTop();
++            insetRight = insets.getSystemWindowInsetRight();
++            insetBottom = insets.getSystemWindowInsetBottom();
++            insetLeft = insets.getSystemWindowInsetLeft();
++            applyInsetsToWebView();
++            return insets;
++        });
++    }
++
++    private void applyInsetsToWebView() {
++        if (webView == null) return;
++        String script = "document.documentElement.style.setProperty('--safe-area-inset-top','" + insetTop + "px');"
++                + "document.documentElement.style.setProperty('--safe-area-inset-right','" + insetRight + "px');"
++                + "document.documentElement.style.setProperty('--safe-area-inset-bottom','" + insetBottom + "px');"
++                + "document.documentElement.style.setProperty('--safe-area-inset-left','" + insetLeft + "px');";
++        webView.evaluateJavascript(script, null);
++    }
++
+     @Override
+     protected void onSaveInstanceState(Bundle outState) {
+         webView.saveState(outState);
+@@ -112,6 +146,12 @@ public final class MainActivity extends Activity {
+         public boolean shouldOverrideUrlLoading(WebView view, String url) {
+             return !isAllowedAppUrl(Uri.parse(url));
+         }
++
++        @Override
++        public void onPageFinished(WebView view, String url) {
++            super.onPageFinished(view, url);
++            applyInsetsToWebView();
++        }
+     }
+ 
+     private boolean isAllowedAppUrl(Uri uri) {
+diff --git a/index.html b/index.html
+index 7cb7c51..1f586cd 100644
+--- a/index.html
++++ b/index.html
+@@ -15,7 +15,7 @@
+   <a class="skip-link" href="#main-content">Saltar al contenido</a>
+   <div class="app-shell">
+     <header class="topbar">
+-      <button class="icon-button hidden" id="back-button" type="button" aria-label="Volver">←</button>
++      <button class="icon-button header-slot-empty" id="back-button" type="button" aria-label="Volver" aria-hidden="true" tabindex="-1">←</button>
+       <button class="brand-button" id="home-brand" type="button" aria-label="Ir al inicio">
+         <span class="brand-mark" aria-hidden="true">✦</span>
+         <span><strong>Oráculo Tarot Laura</strong><small>Lectura y Cartas</small></span>
+@@ -96,6 +96,7 @@
+         <div class="result-cards" id="result-cards"></div>
+         <div class="result-actions">
+           <button class="button button-primary" id="new-reading-button" type="button">Nueva lectura</button>
++          <button class="button button-secondary" id="share-reading-button" type="button">Compartir lectura</button>
+           <button class="button button-secondary" id="result-home-button" type="button">Volver al inicio</button>
+         </div>
+         <p class="reflection-note">Las cartas ofrecen símbolos para reflexionar. Tú decides qué interpretación resulta útil para tu situación.</p>
+@@ -107,7 +108,7 @@
+             <span class="eyebrow">Guardado solo en este dispositivo</span>
+             <h2 id="history-title">Historial</h2>
+           </div>
+-          <button class="text-button danger hidden" id="clear-history-button" type="button">Eliminar todo</button>
++          <button class="text-button danger hidden" id="clear-history-button" type="button">Borrar historial</button>
+         </div>
+         <div id="history-empty" class="empty-state" hidden>
+           <span aria-hidden="true">☾</span>
+@@ -126,13 +127,16 @@
+         </div>
+         <div id="detail-question" class="result-question" hidden></div>
+         <div class="result-cards" id="detail-cards"></div>
++        <div class="result-actions detail-actions">
++          <button class="button button-secondary" id="detail-share-button" type="button">Compartir lectura</button>
++        </div>
+       </section>
+     </main>
+ 
+     <footer><span>Uso recreativo y reflexivo</span><span aria-hidden="true">·</span><span>Sin datos en servidores</span></footer>
+   </div>
+ 
+-  <dialog id="about-dialog" aria-labelledby="about-title">
++  <dialog id="about-dialog" aria-labelledby="about-title" aria-modal="true">
+     <div class="dialog-card">
+       <button class="dialog-close" id="close-about-button" type="button" aria-label="Cerrar">×</button>
+       <span class="dialog-symbol" aria-hidden="true">✦</span>
+@@ -144,7 +148,7 @@
+     </div>
+   </dialog>
+ 
+-  <dialog id="confirm-dialog" aria-labelledby="confirm-title">
++  <dialog id="confirm-dialog" aria-labelledby="confirm-title" aria-modal="true">
+     <form method="dialog" class="dialog-card compact-dialog">
+       <h2 id="confirm-title">Eliminar historial</h2>
+       <p id="confirm-message">Esta acción no se puede deshacer.</p>
+diff --git a/js/app.js b/js/app.js
+index 1a15f5c..0e7a327 100644
+--- a/js/app.js
++++ b/js/app.js
+@@ -14,6 +14,7 @@ const state = {
+ };
+ 
+ const elements = {};
++const dialogReturnFocus = new WeakMap();
+ let toastTimer;
+ 
+ function queryElements() {
+@@ -21,8 +22,8 @@ function queryElements() {
+     'back-button', 'home-brand', 'about-button', 'start-button', 'history-button', 'install-button',
+     'reading-form', 'question-input', 'question-count', 'remaining-count', 'draw-instruction',
+     'reading-context', 'shuffle-status', 'deck-grid', 'selection-progress', 'result-date',
+-    'result-question', 'result-cards', 'new-reading-button', 'result-home-button', 'clear-history-button',
+-    'history-empty', 'history-list', 'empty-start-button', 'detail-date', 'detail-question', 'detail-cards',
++    'result-question', 'result-cards', 'new-reading-button', 'share-reading-button', 'result-home-button', 'clear-history-button',
++    'history-empty', 'history-list', 'empty-start-button', 'detail-date', 'detail-question', 'detail-cards', 'detail-share-button',
+     'about-dialog', 'close-about-button', 'dialog-ok-button', 'confirm-dialog', 'confirm-message', 'toast',
+   ];
+   ids.forEach((id) => { elements[toCamel(id)] = document.getElementById(id); });
+@@ -41,6 +42,7 @@ function init() {
+   }
+   bindEvents();
+   renderHistory();
++  updateShareButtonLabels();
+   registerServiceWorker();
+   showScreen('home', { replaceHistory: true, focus: false });
+ }
+@@ -51,7 +53,7 @@ function bindEvents() {
+   elements.historyButton.addEventListener('click', () => { renderHistory(); showScreen('history'); });
+   elements.homeBrand.addEventListener('click', goHome);
+   elements.backButton.addEventListener('click', goBack);
+-  elements.aboutButton.addEventListener('click', () => elements.aboutDialog.showModal());
++  elements.aboutButton.addEventListener('click', () => showManagedDialog(element
