@@ -47,7 +47,7 @@ jobs:
           FILES=$(git diff --name-only "$START_SHA" "$HEAD_SHA")
           printf '%s\n' "$FILES"
 
-          if printf '%s\n' "$FILES" | grep -Ev '^(README\.md|PROJECT_STATE\.md|QA_PHASE_1\.md|\.github/workflows/build-apk\.yml|\.github/workflows/phase1-metadata-republish\.yml)$' | grep -q .; then
+          if printf '%s\n' "$FILES" | grep -Ev '^(README\.md|PROJECT_STATE\.md|QA_PHASE_1\.md|PHASE1_ARTIFACT_REPORT\.md|\.github/workflows/build-apk\.yml|\.github/workflows/phase1-metadata-republish\.yml)$' | grep -q .; then
             echo 'build=true' >> "$GITHUB_OUTPUT"
           else
             echo 'build=false' >> "$GITHUB_OUTPUT"
