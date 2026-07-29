@@ -7,7 +7,7 @@ on:
       - '.github/workflows/phase1-metadata-republish.yml'
 
 permissions:
-  contents: read
+  contents: write
   actions: read
 
 jobs:
@@ -15,6 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
+      - name: Obtener rama candidata
+        uses: actions/checkout@v4
+        with:
+          ref: fase-1-estabilizacion-v1.0.3
+
       - name: Descargar APK ya compilado
         shell: bash
         env:
@@ -80,6 +85,7 @@ jobs:
           cat "$METADATA"
 
       - name: Publicar APK y metadatos corregidos
+        id: artifact
         uses: actions/upload-artifact@v4
         with:
           name: Oraculo-Tarot-Laura-v1.0.3-debug
@@ -88,3 +94,37 @@ jobs:
             deliverable/Oraculo-Tarot-Laura-v1.0.3-debug-metadata.txt
           if-no-files-found: error
           retention-days: 30
+
+      - name: Registrar evidencia temporal
+        shell: bash
+        env:
+          ARTIFACT_ID: ${{ steps.artifact.outputs.artifact-id }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          METADATA=deliverable/Oraculo-Tarot-Laura-v1.0.3-debug-metadata.txt
+          SIZE=$(awk -F= '$1 == "size_bytes" {print $2}' "$METADATA")
+          SHA256=$(awk -F= '$1 == "sha256" {print $2}' "$METADATA")
+          CERT_SHA256=$(awk -F= '$1 == "certificate_sha256" {print $2}' "$METADATA")
+          cat > PHASE1_ARTIFACT_REPORT.md <<REPORT
+          # Evidencia temporal del artefacto Fase 1
+
+          - run_id: \`$RUN_ID\`
+          - artifact_id: \`$ARTIFACT_ID\`
+          - artifact_name: \`Oraculo-Tarot-Laura-v1.0.3-debug\`
+          - apk_name: \`Oraculo-Tarot-Laura-v1.0.3-debug.apk\`
+          - size_bytes: \`$SIZE\`
+          - sha256: \`$SHA256\`
+          - certificate_sha256: \`$CERT_SHA256\`
+          - application_id: \`cl.oraculotarotlaura.app\`
+          - version_code: \`4\`
+          - version_name: \`1.0.3\`
+          - internet_permission: \`false\`
+          - card_count: \`22\`
+          REPORT
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add PHASE1_ARTIFACT_REPORT.md
+          git commit -m 'chore: record corrected phase 1 artifact evidence'
+          git push origin HEAD:fase-1-estabilizacion-v1.0.3
