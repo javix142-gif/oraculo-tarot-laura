@@ -21,6 +21,72 @@ export function getSpread(spreadType) {
   return spread;
 }
 
+export function getSelectionProgress(spreadType, selectionCount) {
+  const spread = getSpread(spreadType);
+  const total = spread.positions.length;
+  const numericCount = Number.isInteger(selectionCount) ? selectionCount : 0;
+  const completedCount = Math.min(Math.max(numericCount, 0), total);
+
+  if (completedCount >= total) {
+    return Object.freeze({
+      complete: true,
+      position: null,
+      current: total,
+      total,
+      instruction: 'Lectura completa',
+    });
+  }
+
+  const position = spread.positions[completedCount];
+  return Object.freeze({
+    complete: false,
+    position,
+    current: completedCount + 1,
+    total,
+    instruction: position === 'General' ? 'Elige una carta' : `Elige la carta del ${position}`,
+  });
+}
+
+export function createSelectionAttempt({
+  spreadType,
+  selections,
+  card,
+  locked = false,
+  completed = false,
+} = {}) {
+  const spread = getSpread(spreadType);
+  if (!Array.isArray(selections)) throw new TypeError('Las selecciones deben ser una lista.');
+  const hasValidCard = card && typeof card.id === 'string' && card.id.trim();
+  const duplicate = hasValidCard && selections.some((selection) => selection?.card?.id === card.id);
+  const full = selections.length >= spread.positions.length;
+
+  if (!hasValidCard || locked || completed || duplicate || full) {
+    return Object.freeze({
+      accepted: false,
+      selections,
+      position: null,
+      complete: full,
+    });
+  }
+
+  const position = spread.positions[selections.length];
+  const nextSelections = [...selections, { card, position }];
+  return Object.freeze({
+    accepted: true,
+    selections: nextSelections,
+    position,
+    complete: nextSelections.length === spread.positions.length,
+  });
+}
+
+export function claimReadingCompletion(session) {
+  if (!session || typeof session !== 'object') throw new TypeError('La sesión de lectura no es válida.');
+  if (session.readingCompleted) return false;
+  session.readingCompleted = true;
+  session.completionScheduled = false;
+  return true;
+}
+
 export function validateDeck(deck) {
   if (!Array.isArray(deck) || deck.length !== 22) return false;
   const required = ['id', 'number', 'name', 'keywords', 'meaning', 'past', 'present', 'future', 'visual'];

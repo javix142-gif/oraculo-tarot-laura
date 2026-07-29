@@ -1,5 +1,14 @@
 import { TAROT_CARDS } from './tarot-data.js';
-import { SPREADS, buildReading, getSpread, normalizeQuestion, shuffleDeck, validateDeck } from './tarot-engine.js';
+import {
+  buildReading,
+  claimReadingCompletion,
+  createSelectionAttempt,
+  getSelectionProgress,
+  getSpread,
+  normalizeQuestion,
+  shuffleDeck,
+  validateDeck,
+} from './tarot-engine.js';
 import { clearHistory, deleteReading, getHistory, saveReading } from './storage.js';
 
 const state = {
@@ -11,6 +20,10 @@ const state = {
   selections: [],
   currentReading: null,
   deferredInstallPrompt: null,
+  selectionLocked: false,
+  completionScheduled: false,
+  readingCompleted: false,
+  selectionTimer: null,
 };
 
 const elements = {};
@@ -125,14 +138,14 @@ function updateQuestionCount() {
 
 function startDraw(event) {
   event.preventDefault();
+  resetTransientReading();
   const formData = new FormData(elements.readingForm);
   state.spreadType = formData.get('spread') === 'timeline' ? 'timeline' : 'daily';
   state.question = normalizeQuestion(elements.questionInput.value);
   elements.questionInput.value = state.question;
   updateQuestionCount();
   state.shuffledDeck = shuffleDeck(TAROT_CARDS);
-  state.selections = [];
-  state.currentReading = null;
+  state.selectionLocked = true;
   renderDeck();
   showScreen('draw');
   beginShuffleAnimation();
@@ -144,17 +157,21 @@ function beginShuffleAnimation() {
   elements.remainingCount.textContent = count === 1 ? 'una carta' : 'tres cartas';
   elements.drawInstruction.textContent = count === 1
     ? 'Toca una carta boca abajo para revelarla.'
-    : 'Elige una carta para cada posición: Pasado, Presente y Futuro.';
+    : 'Toca una carta disponible para revelarla.';
   elements.readingContext.hidden = !state.question;
   elements.readingContext.textContent = state.question ? `Tu pregunta: “${state.question}”` : '';
   elements.shuffleStatus.hidden = false;
   elements.deckGrid.classList.add('shuffling');
   elements.selectionProgress.textContent = '';
-  window.setTimeout(() => {
+  setDeckAvailability(true);
+  state.selectionTimer = window.setTimeout(() => {
+    state.selectionTimer = null;
     elements.shuffleStatus.hidden = true;
     elements.deckGrid.classList.remove('shuffling');
-    announceNextPosition();
-    elements.deckGrid.querySelector('.deck-card')?.focus();
+    state.selectionLocked = false;
+    setDeckAvailability(false);
+    updateSelectionProgress();
+    elements.deckGrid.querySelector('.deck-card:not(:disabled)')?.focus();
   }, prefersReducedMotion() ? 20 : 720);
 }
 
@@ -164,47 +181,92 @@ function renderDeck() {
     button.type = 'button';
     button.className = 'deck-card';
     button.dataset.index = String(index);
+    button.disabled = true;
+    button.setAttribute('aria-disabled', 'true');
+    button.setAttribute('aria-pressed', 'false');
     button.setAttribute('aria-label', `Carta boca abajo ${index + 1} de 22`);
     button.innerHTML = `
       <span class="deck-card-inner">
         <span class="deck-face deck-back"><img src="./assets/cards/card-back.svg" alt=""></span>
         <span class="deck-face deck-front"><img src="./${card.visual}" alt="${escapeHtml(card.name)}"></span>
-      </span>`;
+      </span>
+      <span class="deck-position-label" hidden></span>`;
     button.addEventListener('click', () => selectCard(button, card));
     return button;
   }));
 }
 
 function selectCard(button, card) {
-  const spread = getSpread(state.spreadType);
-  if (button.disabled || state.selections.length >= spread.positions.length) return;
-  const position = spread.positions[state.selections.length];
-  state.selections.push({ card, position });
-  button.disabled = true;
-  button.classList.add('revealed', 'selected');
-  button.setAttribute('aria-label', `${position}: ${card.name}, revelada`);
-  button.setAttribute('aria-pressed', 'true');
-  elements.selectionProgress.textContent = `${position}: ${card.name}`;
+  const attempt = createSelectionAttempt({
+    spreadType: state.spreadType,
+    selections: state.selections,
+    card,
+    locked: state.selectionLocked,
+    completed: state.completionScheduled || state.readingCompleted,
+  });
+  if (!attempt.accepted) return;
 
-  if (state.selections.length >= spread.positions.length) {
-    elements.deckGrid.querySelectorAll('.deck-card').forEach((item) => { item.disabled = true; });
-    elements.drawInstruction.textContent = 'Lectura completa.';
-    window.setTimeout(completeReading, prefersReducedMotion() ? 30 : 650);
-  } else {
-    announceNextPosition();
+  clearSelectionTimer();
+  state.selectionLocked = true;
+  state.selections = attempt.selections;
+  state.completionScheduled = attempt.complete;
+
+  button.classList.add('revealed', 'selected');
+  button.dataset.position = attempt.position;
+  button.setAttribute('aria-label', `${attempt.position}: ${card.name}, revelada`);
+  button.setAttribute('aria-pressed', 'true');
+  const positionLabel = button.querySelector('.deck-position-label');
+  positionLabel.textContent = attempt.position;
+  positionLabel.hidden = false;
+
+  setDeckAvailability(true);
+  updateSelectionProgress();
+
+  if (attempt.complete) {
+    state.selectionTimer = window.setTimeout(completeReading, prefersReducedMotion() ? 30 : 650);
+    return;
   }
+
+  state.selectionTimer = window.setTimeout(() => {
+    state.selectionTimer = null;
+    state.selectionLocked = false;
+    setDeckAvailability(false);
+    elements.deckGrid.querySelector('.deck-card:not(:disabled)')?.focus();
+  }, prefersReducedMotion() ? 20 : 460);
 }
 
-function announceNextPosition() {
-  const spread = getSpread(state.spreadType);
-  const nextPosition = spread.positions[state.selections.length];
-  const remaining = spread.positions.length - state.selections.length;
-  elements.selectionProgress.textContent = nextPosition === 'General'
-    ? 'Elige una carta.'
-    : `Ahora elige: ${nextPosition}. Quedan ${remaining} carta${remaining === 1 ? '' : 's'}.`;
+function setDeckAvailability(locked) {
+  elements.deckGrid.classList.toggle('selection-locked', locked);
+  elements.deckGrid.querySelectorAll('.deck-card').forEach((item) => {
+    const selected = item.classList.contains('selected');
+    const unavailable = selected || locked || state.completionScheduled || state.readingCompleted;
+    item.disabled = unavailable;
+    item.setAttribute('aria-disabled', String(unavailable));
+  });
+}
+
+function updateSelectionProgress() {
+  const progress = getSelectionProgress(state.spreadType, state.selections.length);
+  if (progress.total === 1) {
+    elements.drawInstruction.textContent = progress.complete
+      ? 'Lectura completa'
+      : 'Toca una carta boca abajo para revelarla.';
+    elements.selectionProgress.textContent = progress.complete ? 'Lectura completa' : '';
+    return;
+  }
+
+  elements.drawInstruction.textContent = progress.complete
+    ? 'Lectura completa'
+    : 'Toca una carta disponible para revelarla.';
+  elements.selectionProgress.textContent = progress.complete
+    ? 'Lectura completa'
+    : `${progress.instruction}\n${progress.current} de ${progress.total}`;
 }
 
 function completeReading() {
+  if (!claimReadingCompletion(state)) return;
+  clearSelectionTimer();
+  setDeckAvailability(true);
   try {
     const reading = buildReading({
       spreadType: state.spreadType,
@@ -379,10 +441,20 @@ function closeDialogFromBackdrop(event) {
   if (event.target === event.currentTarget) event.currentTarget.close('cancel');
 }
 
+function clearSelectionTimer() {
+  if (state.selectionTimer === null) return;
+  window.clearTimeout(state.selectionTimer);
+  state.selectionTimer = null;
+}
+
 function resetTransientReading() {
+  clearSelectionTimer();
   state.shuffledDeck = [];
   state.selections = [];
   state.currentReading = null;
+  state.selectionLocked = false;
+  state.completionScheduled = false;
+  state.readingCompleted = false;
 }
 
 function formatDate(value) {
