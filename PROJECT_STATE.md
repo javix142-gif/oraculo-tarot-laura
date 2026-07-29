@@ -56,11 +56,12 @@ Aplicación web estática en la raíz y copia sincronizada en `android-web/`. Un
 - Primer intento `30423233075`: build aprobado y verificación fallida por el patrón de lectura del certificado.
 - Reintento `30423338193`: pruebas, build, verificación y publicación aprobados.
 - La actualización documental activó una compilación redundante `30423546261`; se añadió detección de cambios para que las actualizaciones solo documentales omitan el job APK. La ejecución `30423630934` confirmó el job APK como omitido.
+- Los metadatos del APK se corrigieron reutilizando el binario ya compilado, sin ejecutar Gradle, mediante la ejecución `30424270494`.
 
 ## Artefacto candidato
 
 - Artefacto: `Oraculo-Tarot-Laura-v1.0.3-debug`
-- Artifact ID: `8712760653`
+- Artifact ID: `8712988257`
 - Archivo: `Oraculo-Tarot-Laura-v1.0.3-debug.apk`
 - Tamaño: `87006` bytes
 - SHA-256: `0c2328296d6efcf107e0d81f588514d9453fe07beca15aba7be30d35e84fa2b0`
@@ -69,6 +70,8 @@ Aplicación web estática en la raíz y copia sincronizada en `android-web/`. Un
 - Permiso de Internet: ausente
 - Cartas incluidas: `22`
 - Variante: `debug`
+- Ejecución de metadatos corregidos: `30424270494`
+- Ejecución de build de origen: `30423546261`
 
 ## Riesgos y pendientes
 
@@ -77,7 +80,6 @@ Aplicación web estática en la raíz y copia sincronizada en `android-web/`. Un
 - Falta comprobar navegación por gestos y navegación Android de tres botones.
 - La firma debug no garantiza compatibilidad de actualización con APK anteriores.
 - La firma permanente sigue pendiente y no se crearon keystore, secretos ni contraseñas.
-- El archivo de metadatos del artefacto registró incorrectamente el texto del campo de certificado; la firma y su SHA-256 fueron verificados directamente en el log de `apksigner`, y el workflow quedó corregido para futuras ejecuciones.
 - La Fase 2 permanece bloqueada.
 
 ## Próxima acción
