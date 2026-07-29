@@ -3,10 +3,6 @@ name: Construir APK de prueba
 on:
   pull_request:
     branches: [main]
-    paths-ignore:
-      - 'README.md'
-      - 'PROJECT_STATE.md'
-      - 'QA_PHASE_1.md'
   workflow_dispatch:
 
 permissions:
@@ -17,7 +13,49 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.filter.outputs.build }}
+    steps:
+      - name: Obtener repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detectar cambios que requieren APK
+        id: filter
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo 'build=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          START_SHA="$BEFORE_SHA"
+          if [[ -z "$START_SHA" || "$START_SHA" =~ ^0+$ ]]; then
+            START_SHA="$BASE_SHA"
+          fi
+
+          git fetch origin "$HEAD_SHA" --depth=1
+          FILES=$(git diff --name-only "$START_SHA" "$HEAD_SHA")
+          printf '%s\n' "$FILES"
+
+          if printf '%s\n' "$FILES" | grep -Ev '^(README\.md|PROJECT_STATE\.md|QA_PHASE_1\.md|\.github/workflows/build-apk\.yml)$' | grep -q .; then
+            echo 'build=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'build=false' >> "$GITHUB_OUTPUT"
+          fi
+
   apk:
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -81,7 +119,7 @@ jobs:
 
           SIZE=$(stat --format='%s' "$APK")
           SHA256=$(sha256sum "$APK" | awk '{print $1}')
-          CERT_SHA256=$(awk -F': ' '/certificate SHA-256 digest:/ {print $2; exit}' /tmp/apk-signature.txt)
+          CERT_SHA256=$(awk -F': ' '/certificate SHA-256 digest:/ {print $NF; exit}' /tmp/apk-signature.txt)
           test -n "$CERT_SHA256"
 
           cat > "$METADATA" <<META
