@@ -38,7 +38,7 @@ test('manifest tiene configuración PWA e iconos existentes', async () => {
 
 test('service worker precarga el núcleo y las 22 cartas', async () => {
   const sw = await read('service-worker.js');
-  assert.match(sw, /oraculo-tarot-laura-v1\.0\.2/);
+  assert.match(sw, /oraculo-tarot-laura-v1\.0\.3/);
   for (const path of ['./index.html','./styles.css','./js/app.js','./manifest.webmanifest','./offline.html','./assets/cards/card-back.svg']) {
     assert.ok(sw.includes(path), `Falta ${path} en la caché esencial`);
   }
@@ -68,14 +68,41 @@ test('todas las pantallas comparten un encabezado fijo y estable', async () => {
   assert.match(html, />Borrar historial</);
 });
 
-test('áreas seguras, desplazamiento y objetivos táctiles están definidos', async () => {
+test('áreas seguras y desplazamiento protegen contenido largo sin duplicar el inset inferior', async () => {
   const css = await read('styles.css');
-  for (const side of ['top','right','bottom','left']) assert.match(css, new RegExp(`--safe-area-inset-${side}`));
+  for (const side of ['top','right','bottom','left']) {
+    assert.match(css, new RegExp(`--android-safe-${side}:\\s*0px`));
+    assert.match(css, new RegExp(`--safe-area-inset-${side}:\\s*max\\(env\\(safe-area-inset-${side}, 0px\\), var\\(--android-safe-${side}\\)\\)`));
+  }
+  assert.match(css, /html\s*\{[^}]*scroll-padding-top:\s*calc\(76px \+ var\(--safe-area-inset-top\)\)/s);
+  assert.match(css, /html\s*\{[^}]*scroll-padding-bottom:\s*calc\(56px \+ var\(--safe-area-inset-bottom\)\)/s);
+  assert.match(css, /body\s*\{[^}]*padding-bottom:\s*var\(--safe-area-inset-bottom\)/s);
+  assert.match(css, /main\s*\{[^}]*padding-bottom:\s*48px/s);
+  assert.doesNotMatch(css, /main\s*\{[^}]*padding-bottom:[^;}]*safe-area-inset-bottom/s);
+  assert.doesNotMatch(css, /footer\s*\{[^}]*safe-area-inset-bottom/s);
+  assert.match(css, /#screen-draw, #screen-result, #screen-detail\s*\{[^}]*padding-bottom:\s*16px/s);
+  assert.match(css, /\.deck-grid\s*\{[^}]*padding:\s*14px 0 28px/s);
   assert.match(css, /overflow-x:\s*hidden/);
-  assert.match(css, /main\s*\{[^}]*padding-bottom:\s*calc\(32px \+ var\(--safe-area-inset-bottom\)\)/s);
+});
+
+test('objetivos táctiles y progreso accesible de la tirada permanecen definidos', async () => {
+  const [html, css, app] = await Promise.all([read('index.html'), read('styles.css'), read('js/app.js')]);
   assert.match(css, /\.button\s*\{[^}]*min-width:\s*48px[^}]*min-height:\s*50px/s);
   assert.match(css, /\.icon-button\s*\{[^}]*width:\s*48px;\s*height:\s*48px/s);
-  assert.match(css, /\.history-summary\s*\{[^}]*white-space:\s*nowrap/s);
+  assert.match(html, /id="selection-progress" aria-live="polite"/);
+  assert.match(app, /getSelectionProgress\(state\.spreadType, state\.selections\.length\)/);
+  assert.match(app, /createSelectionAttempt\(\{/);
+  assert.match(app, /locked:\s*state\.selectionLocked/);
+  assert.match(app, /completed:\s*state\.completionScheduled \|\| state\.readingCompleted/);
+  assert.match(app, /if \(!claimReadingCompletion\(state\)\) return;/);
+  assert.equal((app.match(/saveReading\(reading\)/g) || []).length, 1);
+  assert.equal((app.match(/renderReading\(reading, elements\.resultCards/g) || []).length, 1);
+  assert.match(app, /showScreen\('result'\)/);
+  assert.match(app, /window\.scrollTo\(\{ top: 0, behavior: 'auto' \}\)/);
+  assert.match(app, /setAttribute\('aria-pressed', 'true'\)/);
+  assert.match(app, /class="deck-position-label" hidden/);
+  assert.match(css, /\.deck-card\.selected:disabled\s*\{[^}]*opacity:\s*1/s);
+  assert.match(css, /\.deck-position-label\s*\{/);
 });
 
 test('modales y compartir/copiar tienen las rutas accesibles requeridas', async () => {

@@ -21,17 +21,21 @@ async function listFiles(directory) {
   return output.sort();
 }
 
-test('contenedor Android usa versión 1.0.2, WindowInsets y ningún permiso de Internet', async () => {
+test('contenedor Android usa versión 1.0.3, WindowInsets CSS y ningún permiso de Internet', async () => {
   const [gradle, activity, manifest] = await Promise.all([
     read('app/build.gradle'),
     read('app/src/main/java/cl/oraculotarotlaura/app/MainActivity.java'),
     read('app/src/main/AndroidManifest.xml'),
   ]);
   assert.match(gradle, /applicationId 'cl\.oraculotarotlaura\.app'/);
-  assert.match(gradle, /versionCode 3/);
-  assert.match(gradle, /versionName '1\.0\.2'/);
+  assert.match(gradle, /versionCode 4/);
+  assert.match(gradle, /versionName '1\.0\.3'/);
   assert.match(activity, /setOnApplyWindowInsetsListener/);
-  for (const side of ['top','right','bottom','left']) assert.match(activity, new RegExp(`--safe-area-inset-${side}`));
+  assert.match(activity, /WindowInsets\.Type\.systemBars\(\)/);
+  assert.match(activity, /getDisplayMetrics\(\)\.density/);
+  assert.match(activity, /physicalPixels \/ density/);
+  assert.match(activity, /String\.format\(Locale\.US, "%.2fpx", cssPixels\)/);
+  for (const side of ['top','right','bottom','left']) assert.match(activity, new RegExp(`--android-safe-${side}`));
   assert.match(activity, /onPageFinished/);
   assert.doesNotMatch(manifest, /android\.permission\.INTERNET/);
 });
