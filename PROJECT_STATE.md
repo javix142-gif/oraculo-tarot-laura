@@ -52,18 +52,20 @@ Aplicación web estática en la raíz y copia sincronizada en `android-web/`. Un
 - Contratos de safe areas, `density`, `systemBars()` y `Locale.US` verificados.
 - Build debug: `./gradlew :app:assembleDebug --build-cache` aprobado.
 - Validación GitHub Actions: ejecución `30423338203`, aprobada.
-- APK GitHub Actions: ejecución `30423338193`, aprobada.
-- Primer intento `30423233075`: build aprobado y verificación fallida por el patrón de lectura del certificado; se corrigió únicamente esa causa y se realizó un reintento.
+- APK GitHub Actions de referencia: ejecución `30423546261`, aprobada.
+- Primer intento `30423233075`: build aprobado y verificación fallida por el patrón de lectura del certificado.
+- Reintento `30423338193`: pruebas, build, verificación y publicación aprobados.
+- La actualización documental activó una compilación redundante `30423546261`; se añadió detección de cambios para que las actualizaciones solo documentales omitan el job APK. La ejecución `30423630934` confirmó el job APK como omitido.
 
 ## Artefacto candidato
 
 - Artefacto: `Oraculo-Tarot-Laura-v1.0.3-debug`
-- Artifact ID: `8712689627`
+- Artifact ID: `8712760653`
 - Archivo: `Oraculo-Tarot-Laura-v1.0.3-debug.apk`
-- Tamaño: `87003` bytes
-- SHA-256: `90cc6685ea344d2c7487e5b3b4a550911d1a228557317e02ca9cc7755d454d18`
+- Tamaño: `87006` bytes
+- SHA-256: `0c2328296d6efcf107e0d81f588514d9453fe07beca15aba7be30d35e84fa2b0`
 - Firma: Android Debug
-- Certificado SHA-256: `a428c7f1b9db843ad9927621745a654a7ee32a800a2c4c93a9e064e0e2648cf7`
+- Certificado SHA-256: `111b401c5b2cabf8c1ca180c13321378d58981027b98430e00e3ff3326f09822`
 - Permiso de Internet: ausente
 - Cartas incluidas: `22`
 - Variante: `debug`
@@ -75,6 +77,7 @@ Aplicación web estática en la raíz y copia sincronizada en `android-web/`. Un
 - Falta comprobar navegación por gestos y navegación Android de tres botones.
 - La firma debug no garantiza compatibilidad de actualización con APK anteriores.
 - La firma permanente sigue pendiente y no se crearon keystore, secretos ni contraseñas.
+- El archivo de metadatos del artefacto registró incorrectamente el texto del campo de certificado; la firma y su SHA-256 fueron verificados directamente en el log de `apksigner`, y el workflow quedó corregido para futuras ejecuciones.
 - La Fase 2 permanece bloqueada.
 
 ## Próxima acción
