@@ -1,7 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { TAROT_CARDS } from '../js/tarot-data.js';
-import { SPREADS, buildReading, drawCards, getSpread, normalizeQuestion, shuffleDeck, validateDeck } from '../js/tarot-engine.js';
+import {
+  SPREADS,
+  buildReading,
+  claimReadingCompletion,
+  createSelectionAttempt,
+  drawCards,
+  getSelectionProgress,
+  getSpread,
+  normalizeQuestion,
+  shuffleDeck,
+  validateDeck,
+} from '../js/tarot-engine.js';
 import { MAX_HISTORY, clearHistory, deleteReading, getHistory, saveReading } from '../js/storage.js';
 
 class MemoryStorage {
@@ -57,6 +68,77 @@ test('las posiciones se asignan en orden correcto', () => {
   assert.deepEqual(SPREADS.timeline.positions, ['Pasado','Presente','Futuro']);
 });
 
+test('el progreso de tres cartas deriva 1 de 3, 2 de 3 y 3 de 3 desde las selecciones', () => {
+  assert.deepEqual(getSelectionProgress('timeline', 0), {
+    complete: false, position: 'Pasado', current: 1, total: 3, instruction: 'Elige la carta del Pasado',
+  });
+  assert.deepEqual(getSelectionProgress('timeline', 1), {
+    complete: false, position: 'Presente', current: 2, total: 3, instruction: 'Elige la carta del Presente',
+  });
+  assert.deepEqual(getSelectionProgress('timeline', 2), {
+    complete: false, position: 'Futuro', current: 3, total: 3, instruction: 'Elige la carta del Futuro',
+  });
+  assert.deepEqual(getSelectionProgress('timeline', 3), {
+    complete: true, position: null, current: 3, total: 3, instruction: 'Lectura completa',
+  });
+});
+
+test('Carta del día conserva un flujo de una carta sin progreso 1 de 3', () => {
+  const initial = getSelectionProgress('daily', 0);
+  const complete = getSelectionProgress('daily', 1);
+  assert.equal(initial.position, 'General');
+  assert.equal(initial.current, 1);
+  assert.equal(initial.total, 1);
+  assert.equal(initial.instruction, 'Elige una carta');
+  assert.equal(complete.complete, true);
+  assert.equal(complete.total, 1);
+});
+
+test('la selección protegida asigna Pasado, Presente y Futuro sin duplicados ni una cuarta carta', () => {
+  let selections = [];
+  const first = createSelectionAttempt({ spreadType: 'timeline', selections, card: TAROT_CARDS[0] });
+  assert.equal(first.accepted, true);
+  assert.equal(first.position, 'Pasado');
+  selections = first.selections;
+
+  const duplicate = createSelectionAttempt({ spreadType: 'timeline', selections, card: TAROT_CARDS[0] });
+  assert.equal(duplicate.accepted, false);
+  assert.equal(duplicate.selections, selections);
+
+  const second = createSelectionAttempt({ spreadType: 'timeline', selections, card: TAROT_CARDS[1] });
+  assert.equal(second.position, 'Presente');
+  selections = second.selections;
+
+  const third = createSelectionAttempt({ spreadType: 'timeline', selections, card: TAROT_CARDS[2] });
+  assert.equal(third.position, 'Futuro');
+  assert.equal(third.complete, true);
+  selections = third.selections;
+
+  const fourth = createSelectionAttempt({ spreadType: 'timeline', selections, card: TAROT_CARDS[3] });
+  assert.equal(fourth.accepted, false);
+  assert.equal(fourth.complete, true);
+  assert.equal(selections.length, 3);
+});
+
+test('la selección se rechaza mientras existe bloqueo o finalización programada', () => {
+  const locked = createSelectionAttempt({
+    spreadType: 'timeline', selections: [], card: TAROT_CARDS[0], locked: true,
+  });
+  const completed = createSelectionAttempt({
+    spreadType: 'timeline', selections: [], card: TAROT_CARDS[0], completed: true,
+  });
+  assert.equal(locked.accepted, false);
+  assert.equal(completed.accepted, false);
+});
+
+test('la finalización de una sesión solo puede reclamarse una vez', () => {
+  const session = { readingCompleted: false, completionScheduled: true };
+  assert.equal(claimReadingCompletion(session), true);
+  assert.equal(session.readingCompleted, true);
+  assert.equal(session.completionScheduled, false);
+  assert.equal(claimReadingCompletion(session), false);
+});
+
 test('buildReading conserva pregunta saneada y la interpretación de cada posición', () => {
   const selections = TAROT_CARDS.slice(0, 3).map((card) => ({ card }));
   const reading = buildReading({
@@ -102,6 +184,7 @@ test('entradas inválidas se rechazan o saneen sin romper la lógica', () => {
   assert.throws(() => getSpread('inexistente'), RangeError);
   assert.throws(() => shuffleDeck([]), TypeError);
   assert.throws(() => buildReading({ spreadType: 'daily', selections: [] }), RangeError);
+  assert.throws(() => createSelectionAttempt({ spreadType: 'daily', selections: null, card: TAROT_CARDS[0] }), TypeError);
   const storage = new MemoryStorage();
   storage.setItem('oraculo-tarot-laura:history:v1', '{no-json');
   assert.deepEqual(getHistory(storage), []);

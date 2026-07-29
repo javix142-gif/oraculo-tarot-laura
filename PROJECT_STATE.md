@@ -3,85 +3,85 @@
 ## Estado vigente
 
 - Proyecto: Oráculo Tarot Laura — Lectura y Cartas
-- Versión: 1.0.1
-- Rama activa: `main`
-- Commit de recuperación integrado: `f3f759ac401a2ee1524ca371e422d97e5fd1890c`
+- Estado: candidata Fase 1 lista para revisión
+- Rama base: `main`
+- Commit base: `80a975204d21927246ea060d40dc2388180856fd`
+- Rama candidata: `fase-1-estabilizacion-v1.0.3`
+- Pull request: `#4`
+- `main` modificada por esta fase: no
 - applicationId: `cl.oraculotarotlaura.app`
-- versionCode: `2`
-- versionName: `1.0.1`
+- versionCode: `4`
+- versionName: `1.0.3`
+- CACHE_NAME: `oraculo-tarot-laura-v1.0.3`
 - Android Gradle Plugin: `8.7.0`
 - Gradle: `8.9`
 - JDK: `17`
+- targetSdk: `35`
 
 ## Arquitectura
 
 Aplicación web estática en la raíz y copia sincronizada en `android-web/`. Una Activity Java muestra los assets locales mediante WebView y transmite WindowInsets a variables CSS. No existe backend ni permiso de Internet.
 
-## Funciones implementadas
+`MainActivity.java` ya cumplía antes de esta fase los contratos requeridos: `WindowInsets.Type.systemBars()`, conversión de píxeles físicos mediante `DisplayMetrics.density`, formato decimal con `Locale.US` y transmisión de `--android-safe-top/right/bottom/left`. No fue modificada.
 
-- 22 Arcanos Mayores sin repetición.
-- Tiradas de una y tres cartas.
-- Historial local de máximo 20.
-- PWA offline.
-- Safe areas top, right, bottom y left.
-- Encabezado común con grid `56px / minmax(0, 1fr) / 56px`.
-- Modales con foco, Escape, `aria-modal` y retorno del foco.
-- Compartir lectura con Web Share API y copia compatible.
+## Fase 1 implementada
 
-## Archivos relevantes
-
-- `app/src/main/java/cl/oraculotarotlaura/app/MainActivity.java`
-- `app/build.gradle`
-- `android-web/`
-- `index.html`, `styles.css`, `js/app.js`, `service-worker.js`
-- `tests/static-app.test.mjs`
-- `tests/android-container.test.mjs`
-- `gradle/wrapper/`
-- `.github/workflows/validate.yml`
-- `.github/workflows/build-apk.yml`
-- `.github/workflows/deploy-pages.yml`
-
-## Comandos
-
-```bash
-node --test
-node --check js/app.js
-./gradlew --version
-./gradlew :app:assembleDebug --dry-run
-./gradlew :app:assembleDebug --build-cache
-```
-
-## Validaciones completadas
-
-- 19 pruebas web y lógica aprobadas.
-- 2 pruebas del contenedor y sincronización aprobadas.
-- Total: 21/21 pruebas aprobadas.
-- Sintaxis JavaScript aprobada.
-- 22 cartas y 22 identificadores únicos verificados.
+- Safe areas web combinadas mediante `max()` sin sumar dos veces la misma zona.
+- Encabezado sticky con fondo sólido y protección superior.
+- `scroll-padding-top` y `scroll-padding-bottom` en el documento.
+- Una única reserva inferior efectiva en el contenedor desplazable.
+- Protección adicional para mazo, resultados, detalle y acciones finales.
+- Progreso visible y accesible para Pasado, Presente y Futuro.
+- Estados `1 de 3`, `2 de 3`, `3 de 3` y `Lectura completa`.
+- Bloqueo durante revelado para evitar doble toque y pulsaciones rápidas.
+- Prevención de selección duplicada y de más cartas que las permitidas.
+- Finalización, guardado, renderizado y navegación al resultado ejecutados una sola vez.
+- Carta del día conservada sin mostrar progreso `1 de 3`.
+- Carta seleccionada deshabilitada, revelada, diferenciada y etiquetada por posición.
+- `prefers-reduced-motion` conservado.
 - Web y `android-web` sincronizados.
-- Gradle Wrapper 8.9 verificado con JDK 17.
-- `gradle-wrapper.jar` SHA-256: `498495120a03b9a6ab5d155f5de3c8f0d986a449153702fb80fc80e134484f17`.
-- `:app:assembleDebug --dry-run` aprobado.
-- `git diff --check` aprobado.
-- Una única compilación `:app:assembleDebug --build-cache` aprobada.
-- APK validado con `aapt`, `apksigner` y comprobación ZIP en GitHub Actions.
+- Fase 2 no iniciada.
 
-## Último artefacto válido
+## Validaciones automatizadas
 
-- Archivo: `Oraculo-Tarot-Laura-v1.0.1.apk`
-- Tamaño: `84998` bytes.
-- SHA-256: `0ed43ae4dc4c6a8b61c2471e82b6c91fd56da1f0e789e36c1d8c77c9d0be9253`.
-- Certificado debug SHA-256: `57:CC:31:3B:AD:2C:B5:64:A4:85:B1:78:58:D8:07:AE:BE:85:54:D7:12:8A:A0:53:47:6B:18:E5:27:A3:7A:E7`.
-- Build de GitHub Actions: `30366934262`.
+- `node --test`: 27/27 aprobadas.
+- Sintaxis JavaScript: aprobada.
+- 22 Arcanos Mayores y 22 IDs únicos.
+- Sincronización web/Android aprobada.
+- Ausencia de permiso `android.permission.INTERNET` verificada.
+- Contratos de safe areas, `density`, `systemBars()` y `Locale.US` verificados.
+- Build debug: `./gradlew :app:assembleDebug --build-cache` aprobado.
+- Validación GitHub Actions: ejecución `30423338203`, aprobada.
+- APK GitHub Actions de referencia: ejecución `30423546261`, aprobada.
+- Primer intento `30423233075`: build aprobado y verificación fallida por el patrón de lectura del certificado.
+- Reintento `30423338193`: pruebas, build, verificación y publicación aprobados.
+- La actualización documental activó una compilación redundante `30423546261`; se añadió detección de cambios para que las actualizaciones solo documentales omitan el job APK. La ejecución `30423630934` confirmó el job APK como omitido.
+- Los metadatos del APK se corrigieron reutilizando el binario ya compilado, sin ejecutar Gradle, mediante la ejecución `30424270494`.
+
+## Artefacto candidato
+
+- Artefacto: `Oraculo-Tarot-Laura-v1.0.3-debug`
+- Artifact ID: `8712988257`
+- Archivo: `Oraculo-Tarot-Laura-v1.0.3-debug.apk`
+- Tamaño: `87006` bytes
+- SHA-256: `0c2328296d6efcf107e0d81f588514d9453fe07beca15aba7be30d35e84fa2b0`
+- Firma: Android Debug
+- Certificado SHA-256: `111b401c5b2cabf8c1ca180c13321378d58981027b98430e00e3ff3326f09822`
+- Permiso de Internet: ausente
+- Cartas incluidas: `22`
+- Variante: `debug`
+- Ejecución de metadatos corregidos: `30424270494`
+- Ejecución de build de origen: `30423546261`
 
 ## Riesgos y pendientes
 
-- No se probó todavía en un teléfono físico.
-- El certificado no coincide con el APK 1.0.0, cuyo SHA-256 era `2A:41:87:FC:73:EF:0C:19:B4:59:97:14:9E:7B:7A:5B:C2:18:94:81:A2:71:02:01:A8:D5:F3:E1:97:6D:5D:3E`.
-- La versión 1.0.1 no puede instalarse directamente sobre la 1.0.0. Debe desinstalarse la anterior.
-- Desinstalar elimina el historial guardado en localStorage.
-- La firma debug no es una firma permanente para futuras entregas.
+- No se ejecutó prueba física en teléfono.
+- Falta revisar los tamaños 320×568, 360×640, 390×844 y 412×915 en dispositivo o navegador real.
+- Falta comprobar navegación por gestos y navegación Android de tres botones.
+- La firma debug no garantiza compatibilidad de actualización con APK anteriores.
+- La firma permanente sigue pendiente y no se crearon keystore, secretos ni contraseñas.
+- La Fase 2 permanece bloqueada.
 
 ## Próxima acción
 
-Instalar el APK 1.0.1 en un teléfono después de desinstalar la versión 1.0.0 y realizar la revisión visual de safe areas, encabezado, navegación, modales y compartir/copiar.
+Descargar el APK debug, ejecutar `QA_PHASE_1.md`, revisar capturas y fusionar la PR únicamente después de aprobación expresa.

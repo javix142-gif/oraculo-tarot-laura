@@ -1,4 +1,4 @@
-const CACHE_NAME = 'oraculo-tarot-laura-v1.0.2';
+const CACHE_NAME = 'oraculo-tarot-laura-v1.0.3';
 const CORE_PATHS = [
   "./",
   "./index.html",
