@@ -81,7 +81,7 @@ jobs:
 
           SIZE=$(stat --format='%s' "$APK")
           SHA256=$(sha256sum "$APK" | awk '{print $1}')
-          CERT_SHA256=$(awk -F': ' '/Signer #1 certificate SHA-256 digest:/ {print $2; exit}' /tmp/apk-signature.txt)
+          CERT_SHA256=$(awk -F': ' '/certificate SHA-256 digest:/ {print $2; exit}' /tmp/apk-signature.txt)
           test -n "$CERT_SHA256"
 
           cat > "$METADATA" <<META
