@@ -18,8 +18,9 @@ Candidata `1.0.3` disponible para prueba física desde la rama `fase-1-estabiliz
 - versionCode: `4`
 - versionName: `1.0.3`
 - APK: `Oraculo-Tarot-Laura-v1.0.3-debug.apk`
-- SHA-256: `90cc6685ea344d2c7487e5b3b4a550911d1a228557317e02ca9cc7755d454d18`
-- Certificado debug SHA-256: `a428c7f1b9db843ad9927621745a654a7ee32a800a2c4c93a9e064e0e2648cf7`
+- Tamaño: `87006` bytes
+- SHA-256: `0c2328296d6efcf107e0d81f588514d9453fe07beca15aba7be30d35e84fa2b0`
+- Certificado debug SHA-256: `111b401c5b2cabf8c1ca180c13321378d58981027b98430e00e3ff3326f09822`
 
 ## Lista pendiente de prueba física
 
